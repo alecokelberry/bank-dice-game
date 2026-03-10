@@ -6,10 +6,16 @@ A browser-based multiplayer dice game built with **Next.js 16**, **TypeScript**,
 
 ---
 
+## Inspiration
+
+This game is a digital adaptation of **BANK!**, a physical dice game published by [Thunder Hive Games](https://www.thunderhivegames.com). If you enjoy the app, check out the original — they make great tabletop games.
+
+---
+
 ## How to Play
 
 1. **Setup** — Add 2+ players and choose the round count (10, 15, or 20)
-2. **Safe Zone** (rolls 1-3) — Every roll adds to the shared bank. Rolling a **7 is lucky and adds +70 pts**
+2. **Safe Zone** (rolls 1-3) — Every roll adds to the shared bank. Rolling a **7 is lucky and adds +70 pts**. Rolling a **12 adds 12 pts** (not a double in this zone)
 3. **Danger Zone** (roll 4+) — Rolling **doubles** multiplies the bank **2x**. Rolling a **7 busts** the bank and everyone who hasn't banked yet loses everything
 4. **Bank** anytime after the first roll to lock in the current bank value as your score
 5. The round ends when all players have banked or a bust occurs
@@ -17,15 +23,16 @@ A browser-based multiplayer dice game built with **Next.js 16**, **TypeScript**,
 
 ### Controls
 
-| Input              | Action                                  |
-| ------------------ | --------------------------------------- |
-| Sum buttons (2-11) | Enter the sum you rolled with real dice |
-| Doubles button     | Enter a doubles roll (danger zone only) |
-| `Space` / `R`      | Roll the virtual dice                   |
-| `D`                | Submit doubles                          |
-| `B`                | Bank the first unbanked player          |
-| `1`-`9`            | Bank a specific player by position      |
-| `U`                | Undo last action                        |
+| Input              | Action                                          |
+| ------------------ | ----------------------------------------------- |
+| Sum buttons (2-11) | Enter the sum you rolled with real dice          |
+| **12 button**      | Enter a 12 (safe zone only — not a double here) |
+| Doubles button     | Enter a doubles roll (danger zone only)         |
+| `Space` / `R`      | Roll the virtual dice                           |
+| `D`                | Submit doubles                                  |
+| `B`                | Bank the first unbanked player                  |
+| `1`-`9`            | Bank a specific player by position              |
+| `U`                | Undo last action                                |
 
 ---
 
@@ -120,11 +127,32 @@ npm run build
 
 ---
 
-## Development Approach
+## Development Approach — AI-Assisted Prototyping
 
-I designed every core mechanic, UI flow, state architecture (Zustand with persistence + undo snapshots), turn-order logic, audio/haptics system, and win conditions myself.
+This project is a deliberate showcase of how the next generation of developers can leverage AI coding assistants not as a crutch, but as a **force multiplier** — moving faster, shipping cleaner code, and solving harder problems than would otherwise be possible solo.
 
-To accelerate iteration and ship a polished, production-ready game in under two weeks, I leveraged **Claude Code** as an AI coding assistant — the same way senior engineers use pair-programming tools today. I wrote every prompt, reviewed and refined 100% of the code, handled all edge cases, performed final testing, and managed deployment. This workflow let me focus on high-level problem-solving while moving extremely fast.
+### My Philosophy
+
+I supervise AI tools the same way a lead engineer supervises a junior developer: I define the architecture, set the requirements, review every line, and make all the final calls. The AI handles the boilerplate, accelerates iteration, and lets me stay focused on product thinking. The result is a faster feedback loop without sacrificing ownership of the codebase.
+
+I completed WGU's **Prompt Engineering** course in a single day — a reflection of how fluent I've become working across multiple frontier models including **Claude**, **Gemini**, and **Grok**. Knowing how each model reasons, where each one excels, and how to structure prompts for each is a real and valuable skill — one I apply directly in projects like this.
+
+### The AI Stack for This Project
+
+**Phase 1 — Architecture & Planning with Grok 4.20 Beta**
+
+The project outline, technology selection, and initial architecture were developed using **Grok 4.20 beta** from [xAI](https://x.ai), accessed via the SuperGrok subscription. Grok 4.20 features a new rapid learning architecture with a **4-agent collaboration system** where agents debate and fact-check each other to reduce hallucinations — an approach that makes it particularly strong for high-level planning and tech decisions. (xAI has also announced a "Heavy" tier featuring 16 specialized agents for even more demanding tasks.)
+
+**Phase 2 — Implementation & Iteration in Google Antigravity IDE**
+
+The bulk of implementation, feature development, debugging, and refinement was done inside **[Google Antigravity IDE](https://antigravity.google)** using a combination of Google DeepMind and Anthropic's latest models:
+
+- **Claude Sonnet 4.6** — Fast iteration, UI components, and routine feature work
+- **Claude Opus 4.6** — Deeper reasoning for architecture decisions and complex state logic
+- **Gemini 3.1 Pro** — Long-context reasoning and cross-file refactors
+- **Gemini 3.1 Flash** — Rapid back-and-forth feedback loops and quick edits
+
+Having access to multiple frontier models in a single IDE means I can route tasks to the right model for the job — the same way a senior engineer delegates to the right teammate.
 
 ---
 
