@@ -5,7 +5,7 @@ import { useGameStore, selectIsInDangerZone, selectCanRoll } from "@/store/game-
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { DicePair } from "@/components/dice";
-import { Undo2, Settings, RotateCcw, AlertTriangle, Dices, Sun, Moon, Zap, Sparkles, Ghost, Shield, Cloud, Flame } from "lucide-react";
+import { Undo2, Settings, RotateCcw, AlertTriangle, Dices, Sun, Moon, Zap, Sparkles, Ghost, Shield, Cloud, Flame, Copy, Stethoscope, Bug, Swords, Timer, Star, Bomb } from "lucide-react";
 import { playRollSound, triggerHaptic } from "@/lib/sounds";
 import { useTheme } from "@/components/theme-provider";
 
@@ -209,11 +209,11 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           <Zap className="w-5 h-5 text-amber-500" />
           Round Events
         </DialogTitle>
-        <div className="space-y-4">
+        <div className="max-h-[65vh] overflow-y-auto space-y-4 -mx-1 px-1">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             If enabled, one random event will trigger at the start of each round, modifying the rules for everyone.
           </p>
-          
+
           <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4">
             <h3 className="font-bold text-amber-600 dark:text-amber-400 mb-1 flex items-center gap-2">
               <Zap className="w-4 h-4 text-amber-500" /> Triple Threat
@@ -255,7 +255,43 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Flame className="w-4 h-4 text-red-500" /> Devil&apos;s Mercy
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              The first 7 of the round does not bust — it just adds 7 and continues.
+              The first 7 of the danger zone does not bust — it just adds 7 and continues.
+            </p>
+          </div>
+
+          <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-1 flex items-center gap-2">
+              <Timer className="w-4 h-4 text-orange-500" /> Short Fuse
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              The safe zone only lasts 1 roll this round. Danger hits on roll 2.
+            </p>
+          </div>
+
+          <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-1 flex items-center gap-2">
+              <Star className="w-4 h-4 text-yellow-500" /> Golden Totals
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Any roll totaling 10, 11, or 12 counts as doubles this round. High rollers rejoice.
+            </p>
+          </div>
+
+          <div className="bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-teal-600 dark:text-teal-400 mb-1 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-teal-500" /> Resilient Bank
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              The first 7 in the danger zone only halves the bank instead of wiping it out. A fighting chance.
+            </p>
+          </div>
+
+          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-2">
+              <Bomb className="w-4 h-4 text-rose-500" /> Time Bomb
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              A hidden roll between 4 and 10 is rigged to bust. No warning, no mercy. Nobody knows when it drops.
             </p>
           </div>
         </div>
@@ -266,15 +302,71 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           <Sparkles className="w-5 h-5 text-pink-500" />
           Superpowers
         </DialogTitle>
-        <div className="space-y-4">
+        <div className="max-h-[65vh] overflow-y-auto space-y-4 -mx-1 px-1">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Determine who gets special character abilities that are randomly assigned each round.
+            Each round, every human player is randomly assigned a superpower. Powers refresh every round.
           </p>
-          
-          <div className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-6 text-center mt-4">
-            <p className="text-sm text-gray-500 font-medium">Coming Soon</p>
-            <p className="text-xs text-gray-400 mt-2">
-              Draft unique abilities like shield, steal, and multiplier bonuses to turn the tide.
+
+          <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-500" /> Second Chance
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              If a 7 busts the bank, this player&apos;s power saves the entire bank — and the round continues for everyone who hasn&apos;t banked yet.
+            </p>
+          </div>
+
+          <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-violet-600 dark:text-violet-400 mb-1 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-violet-500" /> Dice Whisperer
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              After any roll, reroll one or both dice before the result locks in.
+            </p>
+          </div>
+
+          <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-1 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-orange-500" /> Hot Streak
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Arm it before a roll by tapping your badge. If a 7 comes up in the danger zone, it&apos;s silently swapped for a safe result. Tap again to cancel.
+            </p>
+          </div>
+
+          <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-sky-600 dark:text-sky-400 mb-1 flex items-center gap-2">
+              <Copy className="w-4 h-4 text-sky-500" /> Mirror Master
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Once this round, tap your badge after a roll to copy those exact dice instead of rolling fresh. The result is computed normally.
+            </p>
+          </div>
+
+          <div className="bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-teal-600 dark:text-teal-400 mb-1 flex items-center gap-2">
+              <Stethoscope className="w-4 h-4 text-teal-500" /> Dice Doctor
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Once this round, tap your badge after a roll to nudge one die up or down by 1 before the result locks in.
+            </p>
+          </div>
+
+          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-2">
+              <Bug className="w-4 h-4 text-rose-500" /> Bank Parasite
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Passive this round: every time anyone banks, you silently gain +100 points. No action needed — it just happens.
+            </p>
+          </div>
+
+          <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-1 flex items-center gap-2">
+              <Swords className="w-4 h-4 text-yellow-500" /> All-In
+            </h3>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Arm it before your roll by tapping your badge. Doubles in the danger zone give 5× the bank instead of 2×. But roll a 7 and you lose your entire accumulated score — not just this round. Go big or go home.
             </p>
           </div>
         </div>

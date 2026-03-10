@@ -14,74 +14,101 @@ This game is a digital adaptation of **BANK!**, a physical dice game published b
 
 ## How to Play
 
-1. **Setup** — Add 2+ players (or AI Ghosts) and choose the round count.
-2. **Safe Zone** (rolls 1-3) — Every roll adds to the shared bank. Rolling a **7 is lucky and adds +70 pts**.
-3. **Danger Zone** (roll 4+) — Rolling **doubles** multiplies the bank **2x**. Rolling a **7 busts** the bank and everyone who hasn't banked yet loses everything.
-4. **Round Events** — If enabled, a random rule-breaking event triggers each round (e.g., Ghost Overdrive, Heavenly Sevens).
-5. **Bank** anytime after the first roll to lock in the current bank value as your score.
-6. The round ends when all players have banked or a bust occurs.
-7. **Highest score after all rounds wins!**
+### The Basics
+
+1. **Setup** — Add 2–8 players (or AI Ghosts), choose a round count, and optionally enable Round Events and Superpowers.
+2. **Safe Zone** (rolls 1–3 by default) — Every roll adds its sum to the shared bank. Rolling a **7 is lucky and adds +70 pts**.
+3. **Danger Zone** (roll 4+) — Rolling **doubles multiplies the bank 2×**. Rolling a **7 busts** the bank and everyone still in loses everything.
+4. **Bank** anytime after roll 1 to lock in your share of the current bank value as score.
+5. The round ends when all players bank or a bust occurs.
+6. **Highest score after all rounds wins.**
+
+### Banking & Scoring
+
+- Banking gives you the **current bank total** as points.
+- **Streak bonuses**: +25 pts for 3 consecutive banks across rounds; +50 pts for 5+ consecutive banks.
+- Players who bust or fail to bank in time score **0 for that round**.
 
 ### Controls
 
-| Input              | Action                                          |
-| ------------------ | ----------------------------------------------- |
-| Sum buttons (2-11) | Enter the sum you rolled with real dice          |
-| **12 button**      | Enter a 12 (safe zone only — not a double here) |
-| Doubles button     | Enter a doubles roll (danger zone only)         |
-| `Space` / `R`      | Roll the virtual dice                           |
-| `D`                | Submit doubles                                  |
-| `B`                | Bank the first unbanked player                  |
-| `1`-`9`            | Bank a specific player by position              |
-| `U`                | Undo last action                                |
-
----
-
-## Tech Stack
-
-| Technology                                                   | Purpose                                                       |
-| ------------------------------------------------------------ | ------------------------------------------------------------- |
-| [Next.js 16](https://nextjs.org/)                            | React framework with App Router and static export             |
-| [TypeScript](https://www.typescriptlang.org/)                | End-to-end type safety                                        |
-| [Zustand](https://github.com/pmndrs/zustand)                 | Lightweight global state management with `persist` middleware |
-| [Framer Motion](https://www.framer.com/motion/)              | Smooth animations and transitions                             |
-| [Tailwind CSS v4](https://tailwindcss.com/)                  | Utility-first styling                                         |
-| [Lucide React](https://lucide.dev/)                          | Consistent icon library                                       |
-| [canvas-confetti](https://github.com/catdad/canvas-confetti) | Win screen celebration effects                                |
-| [Sonner](https://sonner.emilkowal.ski/)                      | Toast notifications                                           |
-| [Vercel](https://vercel.com/)                                | Hosting and continuous deployment                             |
-
----
-
-## Features
-
-- **2-8 players** with custom names, assigned colors, and configurable turn order
-- **AI Ghost Players** — Add automated "Ghost" players with aggressive AI logic that always banks according to the current "safe zone" limit
-- **Round Events** — 4+ unique random modifiers like Triple Threat, Extended Safety, and Devil's Mercy
-- **Superpowers (Coming Soon)** — Unique character abilities assigned per round
-- **Configurable round count** — 10, 15, or 20 rounds
-- **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual dice roller
-- **Banking streak bonus** — +25 pts for 3 consecutive banks, +50 pts for 5+
-- **Snapshot-based undo** — full state rewind for the last action
-- **Synthesized sound effects** — all audio generated via Web Audio API (zero external files)
-- **Haptic feedback** — vibration on mobile for rolls, banks, and busts
-- **State persistence** — game state survives page refreshes via `localStorage`
-- **Responsive design** — mobile-first layout with light/dark mode support
-- **Between-round summaries** — ranked standings shown after each round
+| Input              | Action                                                     |
+| ------------------ | ---------------------------------------------------------- |
+| Sum buttons (2–11) | Enter the sum of the two dice you rolled                   |
+| **12 button**      | Enter a 12 (safe zone only — doubles button replaces it in danger zone) |
+| **Doubles button** | Enter a doubles roll (danger zone only)                    |
+| `Space` / `R`      | Roll the built-in virtual dice                             |
+| `D`                | Submit doubles                                             |
+| `B`                | Bank the first unbanked player                             |
+| `1`–`9`            | Bank a specific player by position                         |
+| `U`                | Undo the last action                                       |
 
 ---
 
 ## Round Events
 
-When enabled, a random event is picked at the start of each round to keep the gameplay fresh and chaotic:
+When enabled, a random event is picked at the start of each round to shake up the rules:
 
-| Event             | Description                                                                     |
-| ----------------- | ------------------------------------------------------------------------------- |
-| **Triple Threat** | Doubles multiply the bank by **3x** instead of 2x.                              |
-| **Extended Safety** | The safe zone lasts for **5 rolls** instead of 3.                             |
-| **Ghost Overdrive** | Every Ghost rolls **twice** per round (two separate turns).                   |
-| **Heavenly Sevens** | Safe-zone 7s give **+140** to the bank instead of +70.                         |
-| **Devil’s Mercy** | The **first 7** of the round does not bust — it just adds 7 and continues.      |
+| Event               | Effect                                                                                  |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **Triple Threat**   | Doubles multiply the bank by **3×** instead of 2×.                                     |
+| **Extended Safety** | The safe zone lasts for **5 rolls** instead of 3. More room to build the bank.         |
+| **Ghost Overdrive** | Every Ghost takes **two turns** this round instead of one.                              |
+| **Heavenly Sevens** | Safe-zone 7s give **+140** to the bank instead of +70.                                 |
+| **Devil's Mercy**   | The **first danger-zone 7** adds 7 to the bank rather than busting it.                 |
+| **Short Fuse**      | The safe zone lasts only **1 roll**. Danger hits immediately.                           |
+| **Golden Totals**   | Any roll totaling **10, 11, or 12** counts as doubles in the danger zone.               |
+| **Resilient Bank**  | The **first danger-zone 7** only **halves** the bank instead of wiping it.              |
+| **Time Bomb**       | A hidden roll between 4 and 10 is rigged to bust. Nobody knows which one until it hits. |
+
+> Events can stack interestingly — a Short Fuse + Time Bomb round is a panic-inducing experience.
+
+---
+
+## Superpowers
+
+When enabled, each player is assigned a unique ability at the start of every round. Powers are single-use and reset each round.
+
+| Power              | Type       | How It Works                                                                          |
+| ------------------ | ---------- | ------------------------------------------------------------------------------------- |
+| **Second Chance**  | Passive    | If a 7 busts the bank, your power saves the entire bank and the round continues.      |
+| **Dice Whisperer** | Post-roll  | After any roll, choose to reroll one or both dice before the result locks in.         |
+| **Hot Streak**     | Armed      | Arm it before your roll. A danger-zone 7 is silently swapped for a safe result.       |
+| **Mirror Master**  | Post-roll  | Copy the exact dice from the previous roll instead of rolling fresh.                  |
+| **Dice Doctor**    | Post-roll  | After your roll, nudge one die up or down by 1.                                       |
+| **Bank Parasite**  | Passive    | Every time any other player banks this round, you silently gain +100 points.          |
+| **All-In**         | Armed      | Arm it before your roll. Doubles give **5×** the bank. Roll a 7 and lose your entire accumulated score. |
+
+> **Armed powers** (Hot Streak, All-In) must be activated via the badge before you roll — they only fire on your own turn. **Post-roll powers** (Whisperer, Doctor, Mirror Master) become available after the dice land. **Passive powers** trigger automatically with no input.
+
+---
+
+## AI Ghost Players
+
+Ghosts are automated opponents that follow a fixed aggressive strategy:
+
+- **In the safe zone**: Ghosts always roll a 7 (maximizing the bank for everyone).
+- **In the danger zone**: Ghosts always roll doubles (multiplying the bank, then banking).
+- Ghosts can be limited to a configurable number of early rounds, or left active for the entire game.
+- Ghost Overdrive round event gives them two turns per round instead of one.
+
+---
+
+## Features
+
+- **2–8 players** with custom names, assigned colors, and configurable turn order
+- **AI Ghost Players** with aggressive bank-building strategy
+- **7 Superpowers** — unique abilities assigned fresh each round
+- **9 Round Events** — random rule modifiers that keep every round unpredictable
+- **Configurable round count** — 10, 15, or 20 rounds
+- **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual roller
+- **Banking streak bonus** — +25 pts for 3 consecutive banks, +50 pts for 5+
+- **Snapshot-based undo** — full state rewind for the last roll or bank action
+- **Synthesized sound effects** — all audio generated via Web Audio API (zero external files)
+- **Haptic feedback** — vibration on mobile for rolls, banks, and busts
+- **State persistence** — game state survives page refreshes via `localStorage`
+- **Responsive design** — mobile-first layout with light/dark mode support
+- **Between-round summaries** — ranked standings with banked/bust status shown after each round
+- **Mid-game settings** — edit player names and options without restarting
 
 ---
 
@@ -91,7 +118,7 @@ When enabled, a random event is picked at the start of each round to keep the ga
 src/
 ├── app/
 │   ├── layout.tsx              # Root layout with metadata and viewport config
-│   ├── page.tsx                # Phase-based game router (setup -> playing -> finished)
+│   ├── page.tsx                # Phase-based game router (setup → playing → finished)
 │   └── globals.css             # Tailwind imports and global styles
 ├── components/
 │   ├── ui/
@@ -100,33 +127,39 @@ src/
 │   ├── bank-display.tsx        # Animated bank counter with danger-zone glow
 │   ├── bust-overlay.tsx        # Full-screen bust notification with screen shake
 │   ├── dice.tsx                # SVG dice faces with rolling animation
-│   ├── player-list.tsx         # Player sidebar with bank buttons and turn indicators
+│   ├── player-list.tsx         # Player sidebar with bank buttons, turn indicators, and superpower badges
 │   ├── roll-controls.tsx       # Sum input grid and keyboard shortcut handler
 │   ├── round-summary.tsx       # Between-round standings overlay
 │   ├── settings-dialog.tsx     # Mid-game settings editor
 │   ├── setup-screen.tsx        # Pre-game player and round configuration
-│   ├── top-bar.tsx             # Navigation bar with round info, undo, and reset
+│   ├── top-bar.tsx             # Navigation bar with round info, event display, undo, and reset
 │   └── winner-screen.tsx       # End-game leaderboard with confetti
 ├── lib/
 │   ├── sounds.ts               # Web Audio API synthesized sounds and haptic feedback
 │   └── utils.ts                # Tailwind class merge utility
 └── store/
-    └── game-store.ts           # Zustand store with all game state, types, and logic
+    └── game-store.ts           # Zustand store: all game state, types, logic, and selectors
 ```
 
 ---
 
 ## Architecture
 
-**Centralized state** — All game logic lives in a single Zustand store (`game-store.ts`). Components are pure consumers that read via selectors and dispatch actions. This makes the data flow predictable and easy to debug.
+**Centralized state** — All game logic lives in a single Zustand store (`game-store.ts`). Components are pure consumers that read via selectors and dispatch named actions. This makes the data flow predictable and keeps components thin.
 
-**Persist middleware** — The store serializes to `localStorage` on every state change, so games survive page refreshes. The storage key is versioned to prevent stale data from breaking the app after updates.
+**Persist middleware** — The store serializes to `localStorage` via Zustand's `persist` middleware with `partialize` — only the fields that matter for game continuity are stored. The storage key is versioned to prevent stale data from breaking the app after updates.
 
-**Static export** — Built as a fully static site (`output: "export"` in `next.config.ts`). No server required — zero cold starts, instant loads, deployable to any CDN.
+**Static export** — Built as a fully static site (`output: "export"` in `next.config.ts`). No server, no cold starts — deployable to any CDN.
 
-**Snapshot undo** — Before every roll or bank action, the entire game state is captured in an `undoSnapshot`. Undo is a single atomic state swap, guaranteeing consistency.
+**Snapshot undo** — Before every roll or bank action, the full game state is captured in an `undoSnapshot`. Undo is a single atomic state swap, guaranteeing consistency across all fields including `timeBombRoll`, armed power state, and superpower usage.
 
-**Component composition** — The main page acts as a phase-based router, rendering `SetupScreen`, the playing UI, or `WinnerScreen` based on game phase. Overlays like `BustOverlay` and `RoundSummary` layer on top via fixed positioning and z-index.
+**Phase-based router** — The main page renders the correct screen based on `phase: "setup" | "playing" | "round_summary" | "finished"`. Overlays (`BustOverlay`, `RoundSummary`) layer on top via fixed positioning.
+
+**Turn order** — `getTurnOrder()` computes the live turn rotation accounting for Ghost Overdrive (ghosts appear twice), banked players (skipped), and inactive ghosts. `advanceRollerIndex()` advances past any players who should be skipped.
+
+**Armed powers** — Hot Streak and All-In use a pre-roll arm pattern: the player taps their badge to store their ID in `activeHotStreakPlayerId`/`activeAllInPlayerId`. On roll, these only fire if the current roller is the armed player, preventing cross-player activation bugs.
+
+**Post-roll powers** — Dice Whisperer, Dice Doctor, and Mirror Master each re-implement roll resolution from a base snapshot to guarantee atomicity. They all support the full event ruleset: Short Fuse safe zone, Golden Totals doubles, Resilient Bank halving, and Devil's Mercy reprieve.
 
 ---
 
@@ -139,7 +172,7 @@ npm install
 # Start development server
 npm run dev       # http://localhost:3000
 
-# Build for production (static export -> /out)
+# Build for production (static export → /out)
 npm run build
 ```
 
