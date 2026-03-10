@@ -82,7 +82,7 @@ export interface GameState {
   resetGame: () => void;
 
   // Gameplay actions
-  handleRoll: (die1: number, die2: number) => void;
+  handleRoll: (die1: number, die2: number, forceNotDouble?: boolean) => void;
   handleBank: (playerId: string) => void;
   advanceRound: () => void;
   dismissRoundSummary: () => void;
@@ -250,13 +250,13 @@ export const useGameStore = create<GameState>()(
 
       // --- Gameplay Actions ---
 
-      handleRoll: (die1: number, die2: number) => {
+      handleRoll: (die1: number, die2: number, forceNotDouble = false) => {
         const state = get();
         if (state.phase !== "playing" || state.isBust) return;
 
         const snapshot = takeSnapshot(state);
         const sum = die1 + die2;
-        const isDouble = die1 === die2;
+        const isDouble = !forceNotDouble && die1 === die2;
         const rc = state.rollCount;
         let bankAfter = state.bank;
         let wasBust = false;

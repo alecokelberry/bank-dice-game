@@ -30,7 +30,15 @@ export function RollControls() {
       if (!canRoll) return;
 
       let d1: number, d2: number;
-      if (sum === 7) {
+      // 12 can only physically be 6+6 (doubles), but in safe rounds it's
+      // a valid non-double result — pass forceNotDouble to the store.
+      if (sum === 12) {
+        d1 = 6;
+        d2 = 6;
+        triggerHaptic("light");
+        handleRoll(d1, d2, true);
+        return;
+      } else if (sum === 7) {
         d1 = 4;
         d2 = 3;
       } else if (sum <= 7) {
@@ -112,8 +120,8 @@ export function RollControls() {
 
   return (
     <div className="flex flex-col items-center gap-3 w-full max-w-md">
-      {/* Sum buttons: 2 rows of 5 covering sums 2–11 */}
       <div className="w-full">
+        {/* Sum buttons: always a 5×2 grid covering sums 2–11 */}
         <div className="grid grid-cols-5 gap-2 px-2">
           {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((sum) => {
             const isSeven = sum === 7;
@@ -130,7 +138,7 @@ export function RollControls() {
                   cursor-pointer disabled:opacity-30 disabled:pointer-events-none
                   ${
                     isSeven
-                      ? rollCount >= SAFE_ZONE_ROLLS
+                      ? isDanger
                         ? "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500"
                         : "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
                       : isDanger
@@ -142,7 +150,7 @@ export function RollControls() {
                 <span>{sum}</span>
                 {isSeven && (
                   <span className="text-[10px] font-medium opacity-80 leading-tight">
-                    {rollCount >= SAFE_ZONE_ROLLS ? "BUST" : "+70"}
+                    {isDanger ? "BUST" : "+70"}
                   </span>
                 )}
               </motion.button>
@@ -150,31 +158,40 @@ export function RollControls() {
           })}
         </div>
 
-        {/* Doubles button — full-width, only meaningful in the danger zone */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={enterDoubles}
-          disabled={!canRoll || isBust || !isDanger}
-          className={`
-            mt-2 mx-2 w-[calc(100%-1rem)]
-            flex items-center justify-center gap-2
-            rounded-xl py-3 text-sm font-semibold transition-all duration-150
-            cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-            ${
-              isDanger
-                ? "bg-violet-600/80 text-white hover:bg-violet-500 border border-violet-500/30 shadow-lg shadow-violet-600/20"
-                : "bg-white/10 text-gray-400 border border-white/10"
-            }
-          `}
-        >
-          <Zap className="w-4 h-4" />
-          <span>Doubles</span>
-          {isDanger ? (
+        {/* Full-width bottom button: 12 in safe zone, Doubles in danger zone */}
+        {!isDanger ? (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => enterSum(12)}
+            disabled={!canRoll || isBust}
+            className="
+              mt-2 mx-2 w-[calc(100%-1rem)]
+              flex items-center justify-center gap-2
+              rounded-xl py-3 text-lg font-bold transition-all duration-150
+              cursor-pointer disabled:opacity-30 disabled:pointer-events-none
+              bg-white/10 text-white hover:bg-white/20 border border-white/10
+            "
+          >
+            <span>12</span>
+          </motion.button>
+        ) : (
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={enterDoubles}
+            disabled={!canRoll || isBust}
+            className="
+              mt-2 mx-2 w-[calc(100%-1rem)]
+              flex items-center justify-center gap-2
+              rounded-xl py-3 text-sm font-semibold transition-all duration-150
+              cursor-pointer disabled:opacity-30 disabled:pointer-events-none
+              bg-violet-600/80 text-white hover:bg-violet-500 border border-violet-500/30 shadow-lg shadow-violet-600/20
+            "
+          >
+            <Zap className="w-4 h-4" />
+            <span>Doubles</span>
             <span className="text-[10px] opacity-80">2x</span>
-          ) : (
-            <span className="text-[10px] opacity-60">(D)</span>
-          )}
-        </motion.button>
+          </motion.button>
+        )}
 
         <div className="text-center mt-2 text-xs text-gray-600">
           Tap the sum you rolled with real dice
