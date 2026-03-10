@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #030712;
@@ -44,4 +45,15 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
+}
+
+
+.dark {
+  --background: #030712;
+  --foreground: #f9fafb;
+}
+
+.light {
+  --background: #fdfdfd;
+  --foreground: #111827;
 }

@@ -12,7 +12,7 @@ export function WinnerScreen() {
   const players = useGameStore((s) => s.players);
   const resetGame = useGameStore((s) => s.resetGame);
   const getWinners = useGameStore((s) => s.getWinners);
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const sortedPlayers = [...players].filter((p) => !p.isGhost).sort((a, b) => b.score - a.score);
   const winners = getWinners();
   const isTie = winners.length > 1;
 
@@ -38,7 +38,7 @@ export function WinnerScreen() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex flex-col items-center justify-start bg-gray-950/95 backdrop-blur-md p-6 overflow-y-auto"
+      className="fixed inset-0 z-40 flex flex-col items-center justify-start bg-white/95 dark:bg-gray-950/95 backdrop-blur-md p-6 overflow-y-auto"
     >
       <div className="flex flex-col items-center max-w-sm w-full pt-8">
         {/* Trophy icon */}
@@ -56,13 +56,13 @@ export function WinnerScreen() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="text-3xl md:text-5xl font-black text-white mb-2 text-center"
+          className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-2 text-center"
         >
           {isTie ? (
             <>
               {winners.map((w, i) => (
                 <span key={w.id}>
-                  {i > 0 && <span className="text-gray-500"> & </span>}
+                  {i > 0 && <span className="text-gray-500 dark:text-gray-500"> & </span>}
                   {w.name}
                 </span>
               ))}
@@ -96,12 +96,12 @@ export function WinnerScreen() {
                 key={player.id}
                 className={`flex items-center justify-between rounded-xl px-4 py-2.5 ${
                   isWinner
-                    ? "bg-amber-400/20 border border-amber-400/30"
-                    : "bg-white/5 border border-white/10"
+                    ? "bg-amber-50 dark:bg-amber-400/20 border border-amber-200 dark:border-amber-400/30"
+                    : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`text-base font-bold ${isWinner ? "text-amber-400" : "text-gray-500"}`}>
+                  <span className={`text-base font-bold ${isWinner ? "text-amber-400" : "text-gray-500 dark:text-gray-500"}`}>
                     {isWinner ? <Crown className="w-4 h-4 inline" /> : `#${idx + 1}`}
                   </span>
                   <div
@@ -110,9 +110,9 @@ export function WinnerScreen() {
                   >
                     {player.name.slice(0, 2).toUpperCase()}
                   </div>
-                  <span className="text-white font-semibold text-sm">{player.name}</span>
+                  <span className="text-gray-900 dark:text-white font-semibold text-sm">{player.name}</span>
                 </div>
-                <span className="text-gray-300 tabular-nums font-mono text-sm">
+                <span className="text-gray-700 dark:text-gray-300 tabular-nums font-mono text-sm">
                   {player.score}
                 </span>
               </div>

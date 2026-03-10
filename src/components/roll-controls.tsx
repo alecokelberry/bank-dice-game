@@ -2,12 +2,16 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useGameStore, selectCanRoll, selectIsInDangerZone } from "@/store/game-store";
+import { 
+  useGameStore, 
+  selectCanRoll, 
+  selectIsInDangerZone, 
+  selectCurrentRoller,
+  getSafeZoneRolls
+} from "@/store/game-store";
 import { Zap } from "lucide-react";
 import { playRollSound, playDoubleSound, playLucky7Sound, triggerHaptic } from "@/lib/sounds";
-
-/** Number of safe-zone rolls before the danger zone kicks in. */
-const SAFE_ZONE_ROLLS = 3;
+import { toast } from "sonner";
 
 export function RollControls() {
   const handleRoll = useGameStore((s) => s.handleRoll);
@@ -18,8 +22,13 @@ export function RollControls() {
   const isBust = useGameStore((s) => s.isBust);
   const phase = useGameStore((s) => s.phase);
   const rollCount = useGameStore((s) => s.rollCount);
+  const currentRoller = useGameStore(selectCurrentRoller);
+  const activeRoundEvent = useGameStore((s) => s.activeRoundEvent);
+  const autoRollGhost = useGameStore((s) => s.autoRollGhost);
+  const safeZoneRolls = useGameStore(getSafeZoneRolls);
 
   const [isRolling, setIsRolling] = useState(false);
+  const isGhostTurn = currentRoller?.isGhost ?? false;
 
   /**
    * Converts a non-doubles sum from physical dice into a (die1, die2) pair.
@@ -90,10 +99,27 @@ export function RollControls() {
     if (phase !== "playing" || !lastDie1 || !lastDie2) return;
     if (lastDie1 === lastDie2) {
       playDoubleSound();
-    } else if (lastDie1 + lastDie2 === 7 && rollCount <= SAFE_ZONE_ROLLS) {
+    } else if (lastDie1 + lastDie2 === 7 && rollCount <= safeZoneRolls) {
       playLucky7Sound();
     }
-  }, [lastDie1, lastDie2, phase, rollCount]);
+  }, [lastDie1, lastDie2, phase, rollCount, safeZoneRolls]);
+
+  // Auto-roll for ghosts
+  useEffect(() => {
+    if (phase !== "playing" || isBust || !canRoll) return;
+    if (currentRoller?.isGhost) {
+      const tId = setTimeout(() => {
+        toast(`👻 ${currentRoller.name} is rolling...`, { id: "ghost-roll", duration: 1500 });
+        playRollSound();
+        triggerHaptic("medium");
+        // Needs brief delay after sound before actually executing
+        setTimeout(() => {
+          autoRollGhost();
+        }, 300);
+      }, 1000);
+      return () => clearTimeout(tId);
+    }
+  }, [phase, isBust, canRoll, currentRoller, autoRollGhost]);
 
   // Keyboard shortcuts: Space/R = virtual roll, D = doubles, U = undo
   useEffect(() => {
@@ -131,7 +157,7 @@ export function RollControls() {
                 key={sum}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => enterSum(sum)}
-                disabled={!canRoll || isBust}
+                disabled={!canRoll || isBust || isGhostTurn}
                 className={`
                   relative flex flex-col items-center justify-center
                   rounded-xl py-3 text-lg font-bold transition-all duration-150
@@ -142,15 +168,15 @@ export function RollControls() {
                         ? "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500"
                         : "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
                       : isDanger
-                        ? "bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 border border-amber-500/20"
-                        : "bg-white/10 text-white hover:bg-white/20 border border-white/10"
+                        ? "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/25 border border-amber-300 dark:border-amber-500/20"
+                        : "bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10"
                   }
                 `}
               >
                 <span>{sum}</span>
                 {isSeven && (
                   <span className="text-[10px] font-medium opacity-80 leading-tight">
-                    {isDanger ? "BUST" : "+70"}
+                    {isDanger ? "BUST" : activeRoundEvent === "heavenly_sevens" ? "+140" : "+70"}
                   </span>
                 )}
               </motion.button>
@@ -163,13 +189,13 @@ export function RollControls() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => enterSum(12)}
-            disabled={!canRoll || isBust}
+            disabled={!canRoll || isBust || isGhostTurn}
             className="
               mt-2 mx-2 w-[calc(100%-1rem)]
               flex items-center justify-center gap-2
               rounded-xl py-3 text-lg font-bold transition-all duration-150
               cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-              bg-white/10 text-white hover:bg-white/20 border border-white/10
+              bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:bg-white/20 border border-black/10 dark:border-white/10
             "
           >
             <span>12</span>
@@ -178,7 +204,7 @@ export function RollControls() {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={enterDoubles}
-            disabled={!canRoll || isBust}
+            disabled={!canRoll || isBust || isGhostTurn}
             className="
               mt-2 mx-2 w-[calc(100%-1rem)]
               flex items-center justify-center gap-2
@@ -189,7 +215,7 @@ export function RollControls() {
           >
             <Zap className="w-4 h-4" />
             <span>Doubles</span>
-            <span className="text-[10px] opacity-80">2x</span>
+            <span className="text-[10px] opacity-80">{activeRoundEvent === "triple_threat" ? "3x" : "2x"}</span>
           </motion.button>
         )}
 

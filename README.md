@@ -14,12 +14,13 @@ This game is a digital adaptation of **BANK!**, a physical dice game published b
 
 ## How to Play
 
-1. **Setup** — Add 2+ players and choose the round count (10, 15, or 20)
-2. **Safe Zone** (rolls 1-3) — Every roll adds to the shared bank. Rolling a **7 is lucky and adds +70 pts**. Rolling a **12 adds 12 pts** (not a double in this zone)
-3. **Danger Zone** (roll 4+) — Rolling **doubles** multiplies the bank **2x**. Rolling a **7 busts** the bank and everyone who hasn't banked yet loses everything
-4. **Bank** anytime after the first roll to lock in the current bank value as your score
-5. The round ends when all players have banked or a bust occurs
-6. **Highest score after all rounds wins!**
+1. **Setup** — Add 2+ players (or AI Ghosts) and choose the round count.
+2. **Safe Zone** (rolls 1-3) — Every roll adds to the shared bank. Rolling a **7 is lucky and adds +70 pts**.
+3. **Danger Zone** (roll 4+) — Rolling **doubles** multiplies the bank **2x**. Rolling a **7 busts** the bank and everyone who hasn't banked yet loses everything.
+4. **Round Events** — If enabled, a random rule-breaking event triggers each round (e.g., Ghost Overdrive, Heavenly Sevens).
+5. **Bank** anytime after the first roll to lock in the current bank value as your score.
+6. The round ends when all players have banked or a bust occurs.
+7. **Highest score after all rounds wins!**
 
 ### Controls
 
@@ -55,6 +56,9 @@ This game is a digital adaptation of **BANK!**, a physical dice game published b
 ## Features
 
 - **2-8 players** with custom names, assigned colors, and configurable turn order
+- **AI Ghost Players** — Add automated "Ghost" players with aggressive AI logic that always banks according to the current "safe zone" limit
+- **Round Events** — 4+ unique random modifiers like Triple Threat, Extended Safety, and Devil's Mercy
+- **Superpowers (Coming Soon)** — Unique character abilities assigned per round
 - **Configurable round count** — 10, 15, or 20 rounds
 - **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual dice roller
 - **Banking streak bonus** — +25 pts for 3 consecutive banks, +50 pts for 5+
@@ -62,8 +66,22 @@ This game is a digital adaptation of **BANK!**, a physical dice game published b
 - **Synthesized sound effects** — all audio generated via Web Audio API (zero external files)
 - **Haptic feedback** — vibration on mobile for rolls, banks, and busts
 - **State persistence** — game state survives page refreshes via `localStorage`
-- **Responsive design** — mobile-first layout with a desktop sidebar
+- **Responsive design** — mobile-first layout with light/dark mode support
 - **Between-round summaries** — ranked standings shown after each round
+
+---
+
+## Round Events
+
+When enabled, a random event is picked at the start of each round to keep the gameplay fresh and chaotic:
+
+| Event             | Description                                                                     |
+| ----------------- | ------------------------------------------------------------------------------- |
+| **Triple Threat** | Doubles multiply the bank by **3x** instead of 2x.                              |
+| **Extended Safety** | The safe zone lasts for **5 rolls** instead of 3.                             |
+| **Ghost Overdrive** | Every Ghost rolls **twice** per round (two separate turns).                   |
+| **Heavenly Sevens** | Safe-zone 7s give **+140** to the bank instead of +70.                         |
+| **Devil’s Mercy** | The **first 7** of the round does not bust — it just adds 7 and continues.      |
 
 ---
 

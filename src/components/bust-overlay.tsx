@@ -25,14 +25,14 @@ export function BustOverlay() {
 
   if (!isBust) return null;
 
-  const bankedPlayers = players.filter((p) => bankedThisRound.includes(p.id));
-  const bustedPlayers = players.filter((p) => !bankedThisRound.includes(p.id));
+  const bustedPlayers = players.filter((p) => !bankedThisRound.includes(p.id) && !p.isGhost);
+  const bankedPlayers = players.filter((p) => bankedThisRound.includes(p.id) && !p.isGhost);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-30 flex items-center justify-center bg-red-950/80 backdrop-blur-sm"
+      className="fixed inset-0 z-30 flex items-center justify-center bg-white/90 dark:bg-red-950/80 backdrop-blur-sm"
     >
       {/* Screen shake animation on bust */}
       <motion.div
@@ -51,7 +51,7 @@ export function BustOverlay() {
           >
             BUST!
           </div>
-          <p className="text-red-300 text-base mb-6">
+          <p className="text-red-600 dark:text-red-300 text-base mb-6">
             A 7 was rolled in the danger zone!
           </p>
         </motion.div>
@@ -69,12 +69,12 @@ export function BustOverlay() {
               {bustedPlayers.map((p) => (
                 <span
                   key={p.id}
-                  className="text-red-300 text-sm font-medium bg-red-500/15 px-2 py-0.5 rounded-full"
+                  className="text-red-600 dark:text-red-300 text-sm font-medium bg-red-100 dark:bg-red-500/15 px-2 py-0.5 rounded-full"
                 >
                   {p.name}
                 </span>
               ))}
-              <span className="text-red-400/70 text-xs">got nothing</span>
+              <span className="text-red-500 dark:text-red-400/70 text-xs">got nothing</span>
             </div>
           )}
           {bankedPlayers.length > 0 && (
@@ -83,12 +83,12 @@ export function BustOverlay() {
               {bankedPlayers.map((p) => (
                 <span
                   key={p.id}
-                  className="text-emerald-300 text-sm font-medium bg-emerald-500/15 px-2 py-0.5 rounded-full"
+                  className="text-emerald-700 dark:text-emerald-300 text-sm font-medium bg-emerald-100 dark:bg-emerald-500/15 px-2 py-0.5 rounded-full"
                 >
                   {p.name}
                 </span>
               ))}
-              <span className="text-emerald-400/70 text-xs">safe!</span>
+              <span className="text-emerald-600 dark:text-emerald-400/70 text-xs">safe!</span>
             </div>
           )}
         </motion.div>
@@ -104,8 +104,7 @@ export function BustOverlay() {
             onClick={advanceRound}
             className="bg-white text-gray-900 hover:bg-gray-200 text-lg"
           >
-            <SkipForward className="w-5 h-5 mr-2" />
-            {currentRound >= totalRounds ? "See Results" : "Next Round"}
+            {currentRound > totalRounds ? "See Results" : "View Leaderboard"}
           </Button>
         </motion.div>
       </motion.div>

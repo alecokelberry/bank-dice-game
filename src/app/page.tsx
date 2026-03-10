@@ -27,15 +27,15 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-500 text-lg">Loading...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-gray-500 dark:text-gray-500 text-lg">Loading...</div>
       </div>
     );
   }
 
   return (
     <main
-      className="min-h-screen text-white flex flex-col transition-colors duration-700 bg-gray-950"
+      className="min-h-screen text-gray-900 dark:text-white flex flex-col transition-colors duration-700 bg-gray-50 dark:bg-gray-950"
       style={{
         backgroundImage:
           phase === "playing" && isDanger && !isBust
@@ -69,7 +69,7 @@ export default function Home() {
           </div>
 
           {/* Sidebar: player list with bank buttons */}
-          <div className="lg:w-80 lg:border-l border-t lg:border-t-0 border-white/10 p-4 lg:p-6 bg-white/[0.02]">
+          <div className="lg:w-80 lg:border-l border-t lg:border-t-0 border-black/10 dark:border-white/10 p-4 lg:p-6 bg-white/[0.02]">
             <PlayerList />
           </div>
         </div>

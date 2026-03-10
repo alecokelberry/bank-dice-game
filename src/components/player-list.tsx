@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useGameStore, selectCanBank, selectCurrentRoller } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
-import { Landmark, Check, Trophy, Crown, Dices } from "lucide-react";
+import { Landmark, Check, Trophy, Crown, Dices, Ghost } from "lucide-react";
 import { playBankSound, triggerHaptic } from "@/lib/sounds";
 
 /** Circular avatar showing player initials on their assigned color. */
@@ -35,8 +35,15 @@ export function PlayerList() {
   const phase = useGameStore((s) => s.phase);
   const currentRoller = useGameStore(selectCurrentRoller);
   const isBust = useGameStore((s) => s.isBust);
+  const currentRound = useGameStore((s) => s.currentRound);
+  const ghostsActiveUntilRound = useGameStore((s) => s.ghostsActiveUntilRound);
 
-  const maxScore = Math.max(...players.map((p) => p.score), 0);
+  // During gameplay, hide ghosts that are past their active round limit.
+  const visiblePlayers = players.filter(
+    (p) => !p.isGhost || currentRound <= ghostsActiveUntilRound
+  );
+
+  const maxScore = Math.max(...visiblePlayers.map((p) => p.score), 0);
 
   // Keyboard shortcuts: B = bank first unbanked player, 1-9 = bank specific player
   useEffect(() => {
@@ -46,7 +53,7 @@ export function PlayerList() {
 
       if (e.key === "b" || e.key === "B") {
         e.preventDefault();
-        const unbanked = players.filter((p) => !bankedThisRound.includes(p.id));
+        const unbanked = players.filter((p) => !bankedThisRound.includes(p.id) && !p.isGhost);
         if (unbanked.length > 0) {
           playBankSound();
           triggerHaptic("light");
@@ -57,7 +64,7 @@ export function PlayerList() {
       const num = parseInt(e.key);
       if (num >= 1 && num <= 9 && num <= players.length) {
         const player = players[num - 1];
-        if (!bankedThisRound.includes(player.id)) {
+        if (!player.isGhost && !bankedThisRound.includes(player.id)) {
           e.preventDefault();
           playBankSound();
           triggerHaptic("light");
@@ -77,11 +84,11 @@ export function PlayerList() {
 
   return (
     <div className="w-full space-y-2">
-      <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider px-1">
+      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider px-1">
         Players
       </h3>
       <div className="space-y-2">
-        {players.map((player, idx) => {
+        {visiblePlayers.map((player, idx) => {
           const hasBanked = bankedThisRound.includes(player.id);
           const isLeader = player.score > 0 && player.score === maxScore;
           const isCurrentRoller = currentRoller?.id === player.id && !isBust;
@@ -94,13 +101,15 @@ export function PlayerList() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               className={`flex items-center gap-3 rounded-xl p-3 transition-all duration-300 ${
+                player.isGhost ? "opacity-80" : ""
+              } ${
                 hasBanked
-                  ? "bg-emerald-500/10 border border-emerald-500/20"
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20"
                   : isCurrentRoller
-                    ? "bg-indigo-500/10 border border-indigo-500/30 shadow-md shadow-indigo-500/5"
-                    : canBank
-                      ? "bg-white/5 border border-white/10 hover:border-white/20"
-                      : "bg-white/5 border border-white/10"
+                    ? "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 shadow-md shadow-indigo-500/5"
+                    : canBank && !player.isGhost
+                      ? "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20"
+                      : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10"
               }`}
             >
               {/* Avatar with optional leader crown or roller dice icon */}
@@ -121,21 +130,22 @@ export function PlayerList() {
                     animate={{ scale: 1 }}
                     className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center"
                   >
-                    <Dices className="w-2.5 h-2.5 text-white" />
+                    <Dices className="w-2.5 h-2.5 text-gray-900 dark:text-white" />
                   </motion.div>
                 )}
               </div>
 
               {/* Player name and score */}
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white truncate flex items-center gap-1.5">
+                <div className="font-semibold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
+                  {player.isGhost && <Ghost className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400 shrink-0" />}
                   {player.name}
                   {isLeader && <Trophy className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
                 </div>
-                <div className="text-sm text-gray-400 tabular-nums">{player.score} pts</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 tabular-nums">{player.score} pts</div>
               </div>
 
-              {/* Bank button or "Banked" badge */}
+              {/* Bank button or "Banked" badge or "Ghost" label */}
               {phase === "playing" && (
                 <>
                   {hasBanked ? (
@@ -147,6 +157,10 @@ export function PlayerList() {
                       <Check className="w-4 h-4" />
                       <span>Banked</span>
                     </motion.div>
+                  ) : player.isGhost ? (
+                    <div className="flex items-center gap-1 text-gray-500 dark:text-gray-500 text-xs italic pr-2">
+                       never banks
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Button
@@ -154,7 +168,7 @@ export function PlayerList() {
                         size="sm"
                         disabled={!canBank}
                         onClick={() => onBank(player.id)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-gray-700 disabled:text-gray-500"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white disabled:bg-gray-800 disabled:text-gray-500"
                       >
                         <Landmark className="w-3.5 h-3.5" />
                         <span className="ml-1">{bank > 0 ? `+${bank}` : "Bank"}</span>
