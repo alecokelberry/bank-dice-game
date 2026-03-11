@@ -85,15 +85,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => setVirtualDiceOpen(true)}
-                      title="Virtual dice"
-                      className="h-8 w-8 hover:bg-gray-200 dark:hover:bg-gray-700"
-                    >
-                      <Dices className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
                       onClick={undo}
                       disabled={!undoSnapshot}
                       title={undoSnapshot && undoLabel ? `Undo: ${undoLabel}` : "Undo (Not available)"}
@@ -110,23 +101,22 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           )}
         </div>
 
-        {/* Center Section: Event Badge (breaks to new row on mobile, centered on large screens) */}
-        {phase === "playing" && roundEventsEnabled && activeEvent && !isBust && (
-          <div className="flex justify-center order-last w-full sm:w-auto sm:order-0 shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2 mt-1 sm:mt-0">
-            <div 
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border bg-amber-500/10 border-amber-500/20 shadow-sm cursor-help transition-transform hover:scale-105" 
-              title={activeEvent.description}
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
-                {activeEvent.name}
-              </span>
-            </div>
-          </div>
-        )}
+        {/* Center Section removed (moved to bank-display) */}
 
         {/* Right Section: Action buttons */}
         <div className="flex items-center justify-end gap-0.5 sm:gap-1 ml-auto">
+          {phase === "playing" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setVirtualDiceOpen(true)}
+              title="Virtual dice"
+              className="h-8 w-8 sm:h-9 sm:w-9"
+            >
+              <Dices className="w-4 h-4 text-emerald-500" />
+            </Button>
+          )}
+
           {phase === "playing" && (
             <Button
               variant="ghost"
@@ -152,7 +142,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           )}
           
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="h-8 w-8 sm:h-9 sm:w-9">
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {theme === "dark" ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-indigo-500" />}
           </Button>
 
           {phase === "playing" && (

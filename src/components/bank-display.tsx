@@ -2,9 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useGameStore, selectIsInDangerZone, selectCurrentRoller } from "@/store/game-store";
-import { Ghost } from "lucide-react";
-import { Landmark, Dices, Zap } from "lucide-react";
+import { useGameStore, selectIsInDangerZone, selectCurrentRoller, ROUND_EVENTS } from "@/store/game-store";
+import { Ghost, Landmark, Dices, Zap, Shield, Cloud, Flame, Timer, Star, Bomb } from "lucide-react";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
+
+const EVENT_UI: Record<string, any> = {
+  triple_threat: { icon: Zap, badgeBg: "bg-amber-500/20 border-amber-500/30", badgeText: "text-amber-500 dark:text-amber-400", badgeIcon: "text-amber-600 dark:text-amber-400", modalIcon: "text-amber-500" },
+  extended_safety: { icon: Shield, badgeBg: "bg-emerald-500/20 border-emerald-500/30", badgeText: "text-emerald-500 dark:text-emerald-400", badgeIcon: "text-emerald-600 dark:text-emerald-400", modalIcon: "text-emerald-500" },
+  ghost_overdrive: { icon: Ghost, badgeBg: "bg-violet-500/20 border-violet-500/30", badgeText: "text-violet-500 dark:text-violet-400", badgeIcon: "text-violet-600 dark:text-violet-400", modalIcon: "text-violet-500" },
+  heavenly_sevens: { icon: Cloud, badgeBg: "bg-sky-500/20 border-sky-500/30", badgeText: "text-sky-500 dark:text-sky-400", badgeIcon: "text-sky-600 dark:text-sky-400", modalIcon: "text-sky-500" },
+  devils_mercy: { icon: Flame, badgeBg: "bg-red-500/20 border-red-500/30", badgeText: "text-red-500 dark:text-red-400", badgeIcon: "text-red-600 dark:text-red-400", modalIcon: "text-red-500" },
+  short_fuse: { icon: Timer, badgeBg: "bg-orange-500/20 border-orange-500/30", badgeText: "text-orange-500 dark:text-orange-400", badgeIcon: "text-orange-600 dark:text-orange-400", modalIcon: "text-orange-500" },
+  golden_totals: { icon: Star, badgeBg: "bg-yellow-500/20 border-yellow-500/30", badgeText: "text-yellow-600 dark:text-yellow-500", badgeIcon: "text-yellow-600 dark:text-yellow-500", modalIcon: "text-yellow-500" },
+  resilient_bank: { icon: Shield, badgeBg: "bg-teal-500/20 border-teal-500/30", badgeText: "text-teal-500 dark:text-teal-400", badgeIcon: "text-teal-600 dark:text-teal-400", modalIcon: "text-teal-500" },
+  time_bomb: { icon: Bomb, badgeBg: "bg-rose-500/20 border-rose-500/30", badgeText: "text-rose-500 dark:text-rose-400", badgeIcon: "text-rose-600 dark:text-rose-400", modalIcon: "text-rose-500" },
+};
 
 /** Smoothly counts from the previous value to the new one using eased interpolation. */
 function AnimatedNumber({ value }: { value: number }) {
@@ -48,8 +60,12 @@ export function BankDisplay() {
   const isBust = useGameStore((s) => s.isBust);
   const isDanger = useGameStore(selectIsInDangerZone);
   const currentRoller = useGameStore(selectCurrentRoller);
-
-
+  const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
+  const activeRoundEventId = useGameStore((s) => s.activeRoundEvent);
+  const activeEvent = ROUND_EVENTS.find((e) => e.id === activeRoundEventId);
+  const phase = useGameStore((s) => s.phase);
+  
+  const [eventModalOpen, setEventModalOpen] = useState(false);
 
   // Dynamic color based on game state: red for bust, amber for danger, green for safe
   const colorClass = isBust ? "text-red-500" : isDanger ? "text-amber-400" : "text-emerald-400";
@@ -62,7 +78,26 @@ export function BankDisplay() {
   return (
     <div className="flex flex-col items-center gap-2 relative">
 
-
+      {/* Round Event Badge positioned above the score */}
+      {phase === "playing" && roundEventsEnabled && activeEvent && !isBust && (() => {
+        const ui = EVENT_UI[activeEvent.id] || EVENT_UI.triple_threat;
+        const Icon = ui.icon;
+        return (
+          <div className="relative z-10 mb-2">
+            <button 
+              type="button"
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border shadow-sm cursor-pointer transition-transform hover:scale-105 ${ui.badgeBg}`} 
+              title="Click for details"
+              onClick={() => setEventModalOpen(true)}
+            >
+              <Icon className={`w-3.5 h-3.5 shrink-0 ${ui.badgeIcon}`} />
+              <span className={`text-xs font-bold uppercase tracking-wider ${ui.badgeText}`}>
+                {activeEvent.name}
+              </span>
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Ambient glow behind the bank number */}
       <div
@@ -116,6 +151,25 @@ export function BankDisplay() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Event Details Modal */}
+      {activeEvent && (() => {
+        const ui = EVENT_UI[activeEvent.id] || EVENT_UI.triple_threat;
+        const Icon = ui.icon;
+        return (
+          <Dialog open={eventModalOpen} onOpenChange={setEventModalOpen}>
+            <DialogTitle className="flex items-center gap-2 mb-4">
+              <Icon className={`w-5 h-5 ${ui.modalIcon}`} />
+              {activeEvent.name}
+            </DialogTitle>
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {activeEvent.description}
+              </p>
+            </div>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 }
