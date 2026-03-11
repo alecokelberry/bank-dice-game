@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useGameStore, selectIsInDangerZone, selectCanRoll } from "@/store/game-store";
+import { useGameStore, selectIsInDangerZone, selectCanRoll, ROUND_EVENTS } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { DicePair } from "@/components/dice";
-import { Undo2, Settings, RotateCcw, AlertTriangle, Dices, Sun, Moon, Zap, Sparkles, Ghost, Shield, Cloud, Flame, Copy, Stethoscope, Bug, Swords, Timer, Star, Bomb } from "lucide-react";
+import { Undo2, RotateCcw, AlertTriangle, Dices, Sun, Moon, Zap, Ghost, Shield, Cloud, Flame, Timer, Star, Bomb, Trophy, Sparkles } from "lucide-react";
 import { playRollSound, triggerHaptic } from "@/lib/sounds";
 import { useTheme } from "@/components/theme-provider";
 
@@ -34,11 +34,11 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
   const [isRolling, setIsRolling] = useState(false);
   
   const [eventModalOpen, setEventModalOpen] = useState(false);
-  const [powerModalOpen, setPowerModalOpen] = useState(false);
   const [ghostModalOpen, setGhostModalOpen] = useState(false);
-
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
-  const superpowersEnabled = useGameStore((s) => s.superpowersEnabled);
+  const activeRoundEventId = useGameStore((s) => s.activeRoundEvent);
+  const activeEvent = ROUND_EVENTS.find((e) => e.id === activeRoundEventId);
   const players = useGameStore((s) => s.players);
   const hasGhosts = players.some(p => p.isGhost);
 
@@ -61,47 +61,104 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
 
   return (
     <>
-      <header className="flex items-center justify-between px-4 py-3 bg-black/5 dark:bg-white/5 border-b border-black/10 dark:border-white/10 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center px-4 py-3 bg-white/60 dark:bg-gray-900/60 border-b border-gray-200/60 dark:border-gray-700/50 backdrop-blur-md shadow-sm">
+        
+        {/* Left Section: Logo & Controls */}
+        <div className="flex flex-1 items-center gap-4">
+          <div className="text-2xl font-black bg-linear-to-br from-indigo-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm select-none tracking-tight">BANK!</div>
+          
           {(phase === "playing" || phase === "round_summary") && (
-            <>
-              <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                Round{" "}
-                <span className="text-indigo-400">
-                  {currentRound}/{totalRounds}
-                </span>
+            <div className="flex items-center gap-3 border-l border-gray-200 dark:border-gray-700 pl-4">
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Round <span className="text-indigo-500">{currentRound}/{totalRounds}</span>
               </div>
               {phase === "playing" && (
-                <div
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    isDanger
-                      ? "text-amber-600 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/20"
-                      : "text-gray-600 dark:text-gray-400 bg-black/10 dark:bg-white/10"
-                  }`}
-                >
-                  Roll #{rollCount || "—"}
-                </div>
+                <>
+                  <div
+                    className={`text-xs px-2.5 py-1 rounded-full font-bold ${
+                      isDanger
+                        ? "text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/20 shadow-inner"
+                        : "text-gray-600 dark:text-gray-300 bg-black/5 dark:bg-white/10 shadow-inner"
+                    }`}
+                  >
+                    Roll #{rollCount || "—"}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setVirtualDiceOpen(true)}
+                      title="Virtual dice"
+                      className="h-8 w-8 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    >
+                      <Dices className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={undo}
+                      disabled={!undoSnapshot}
+                      title={undoSnapshot && undoLabel ? `Undo: ${undoLabel}` : "Undo (Not available)"}
+                      className={`h-8 w-8 hover:bg-gray-200 dark:hover:bg-gray-700 transition-opacity ${
+                        !undoSnapshot ? "opacity-30 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <Undo2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </>
               )}
-            </>
-          )}
-          {phase === "setup" && (
-            <div className="text-lg font-bold text-gray-900 dark:text-white tracking-tight">BANK!</div>
+            </div>
           )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-1">
-          {phase === "playing" && undoSnapshot && (
+        {/* Center Section: Event Badge */}
+        <div className="flex flex-1 justify-center shrink-0">
+          {phase === "playing" && roundEventsEnabled && activeEvent && !isBust && (
+            <div 
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border bg-amber-500/10 border-amber-500/20 shadow-sm cursor-help transition-transform hover:scale-105" 
+              title={activeEvent.description}
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                {activeEvent.name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right Section: Action buttons */}
+        <div className="flex flex-1 items-center justify-end gap-1">
+          {phase === "playing" && (
             <Button
               variant="ghost"
               size="icon"
-              onClick={undo}
-              title={undoLabel ? `Undo: ${undoLabel}` : "Undo"}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white"
+              onClick={() => setLeaderboardOpen(true)}
+              title="Live Leaderboard"
             >
-              <Undo2 className="w-4 h-4" />
+              <Trophy className="w-4 h-4 text-amber-500" />
             </Button>
           )}
+
+          {/* Always show in setup. In playing phase, only show if enabled */}
+          {(phase === "setup" || roundEventsEnabled) && (
+            <Button variant="ghost" size="icon" onClick={() => setEventModalOpen(true)} title="Round Events">
+              <Sparkles className="w-4 h-4 text-fuchsia-500" />
+            </Button>
+          )}
+
+          {(phase === "setup" || hasGhosts) && (
+            <Button variant="ghost" size="icon" onClick={() => setGhostModalOpen(true)} title="Ghost Players">
+              <Ghost className="w-4 h-4 text-violet-500" />
+            </Button>
+          )}
+
+
+          
+          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+
           {phase === "playing" && (
             <Button
               variant="ghost"
@@ -112,41 +169,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <RotateCcw className="w-4 h-4" />
             </Button>
           )}
-          {phase === "playing" && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setVirtualDiceOpen(true)}
-              title="Virtual dice"
-            >
-              <Dices className="w-4 h-4" />
-            </Button>
-          )}
-          {/* Always show in setup. In playing phase, only show if enabled */}
-          {(phase === "setup" || roundEventsEnabled) && (
-            <Button variant="ghost" size="icon" onClick={() => setEventModalOpen(true)} title="Round Events">
-              <Zap className="w-4 h-4 text-amber-500" />
-            </Button>
-          )}
-          {(phase === "setup" || superpowersEnabled) && (
-            <Button variant="ghost" size="icon" onClick={() => setPowerModalOpen(true)} title="Superpowers">
-              <Sparkles className="w-4 h-4 text-pink-500" />
-            </Button>
-          )}
-          {(phase === "setup" || hasGhosts) && (
-            <Button variant="ghost" size="icon" onClick={() => setGhostModalOpen(true)} title="Ghost Players">
-              <Ghost className="w-4 h-4 text-violet-500" />
-            </Button>
-          )}
-
-          {phase !== "setup" && (
-            <Button variant="ghost" size="icon" onClick={onOpenSettings} title="Settings">
-              <Settings className="w-4 h-4" />
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
-            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </Button>
         </div>
       </header>
 
@@ -206,7 +228,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
       {/* Info Modals for setup screen */}
       <Dialog open={eventModalOpen} onOpenChange={setEventModalOpen}>
         <DialogTitle className="flex items-center gap-2 mb-4">
-          <Zap className="w-5 h-5 text-amber-500" />
+          <Sparkles className="w-5 h-5 text-fuchsia-500" />
           Round Events
         </DialogTitle>
         <div className="max-h-[65vh] overflow-y-auto space-y-4 -mx-1 px-1">
@@ -297,80 +319,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
         </div>
       </Dialog>
 
-      <Dialog open={powerModalOpen} onOpenChange={setPowerModalOpen}>
-        <DialogTitle className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-pink-500" />
-          Superpowers
-        </DialogTitle>
-        <div className="max-h-[65vh] overflow-y-auto space-y-4 -mx-1 px-1">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Each round, every human player is randomly assigned a superpower. Powers refresh every round.
-          </p>
 
-          <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-emerald-600 dark:text-emerald-400 mb-1 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-500" /> Second Chance
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              If a 7 busts the bank, this player&apos;s power saves the entire bank — and the round continues for everyone who hasn&apos;t banked yet.
-            </p>
-          </div>
-
-          <div className="bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-violet-600 dark:text-violet-400 mb-1 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-500" /> Dice Whisperer
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              After any roll, reroll one or both dice before the result locks in.
-            </p>
-          </div>
-
-          <div className="bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-orange-600 dark:text-orange-400 mb-1 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-500" /> Hot Streak
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Arm it before a roll by tapping your badge. If a 7 comes up in the danger zone, it&apos;s silently swapped for a safe result. Tap again to cancel.
-            </p>
-          </div>
-
-          <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-sky-600 dark:text-sky-400 mb-1 flex items-center gap-2">
-              <Copy className="w-4 h-4 text-sky-500" /> Mirror Master
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Once this round, tap your badge after a roll to copy those exact dice instead of rolling fresh. The result is computed normally.
-            </p>
-          </div>
-
-          <div className="bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-teal-600 dark:text-teal-400 mb-1 flex items-center gap-2">
-              <Stethoscope className="w-4 h-4 text-teal-500" /> Dice Doctor
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Once this round, tap your badge after a roll to nudge one die up or down by 1 before the result locks in.
-            </p>
-          </div>
-
-          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-rose-600 dark:text-rose-400 mb-1 flex items-center gap-2">
-              <Bug className="w-4 h-4 text-rose-500" /> Bank Parasite
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Passive this round: every time anyone banks, you silently gain +100 points. No action needed — it just happens.
-            </p>
-          </div>
-
-          <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-4">
-            <h3 className="font-bold text-yellow-600 dark:text-yellow-500 mb-1 flex items-center gap-2">
-              <Swords className="w-4 h-4 text-yellow-500" /> All-In
-            </h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Arm it before your roll by tapping your badge. Doubles in the danger zone give 5× the bank instead of 2×. But roll a 7 and you lose your entire accumulated score — not just this round. Go big or go home.
-            </p>
-          </div>
-        </div>
-      </Dialog>
       
       <Dialog open={ghostModalOpen} onOpenChange={setGhostModalOpen}>
         <DialogTitle className="flex items-center gap-2 mb-4">
@@ -381,6 +330,40 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Automated AI players that constantly push their luck. They take their turns automatically, trying to hit doubles or 7s, serving as a pace-setter or a chaotic wild card in your games.
           </p>
+        </div>
+      </Dialog>
+      
+      {/* Live Leaderboard Modal */}
+      <Dialog open={leaderboardOpen} onOpenChange={setLeaderboardOpen}>
+        <DialogTitle className="flex items-center gap-2 mb-4">
+          <Trophy className="w-5 h-5 text-amber-500" />
+          Live Leaderboard
+        </DialogTitle>
+        <div className="space-y-3">
+          {players.filter((p) => !p.isGhost).length === 0 ? (
+            <p className="text-sm text-gray-500">No human players yet.</p>
+          ) : (
+            players
+              .filter((p) => !p.isGhost)
+              .sort((a, b) => b.score - a.score)
+              .map((p, idx) => (
+                <div key={p.id} className="flex justify-between items-center py-2 border-b border-black/5 dark:border-white/5 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm text-gray-500 w-4">{idx + 1}.</span>
+                    <div
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                      style={{ backgroundColor: p.color }}
+                    >
+                      {p.name.slice(0, 2).toUpperCase()}
+                    </div>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                      {p.name}
+                    </span>
+                  </div>
+                  <span className="font-bold text-gray-900 dark:text-white">{p.score}</span>
+                </div>
+              ))
+          )}
         </div>
       </Dialog>
     </>

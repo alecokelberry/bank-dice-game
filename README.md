@@ -78,6 +78,7 @@ Ghosts are automated opponents that follow a fixed aggressive strategy:
 
 - **2–8 players** with custom names, assigned colors, and configurable turn order
 - **AI Ghost Players** with aggressive bank-building strategy
+- **Live Leaderboards** — track rankings in real-time during gameplay
 - **9 Round Events** — random rule modifiers that keep every round unpredictable
 - **Configurable round count** — 10, 15, or 20 rounds
 - **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual roller
@@ -107,12 +108,12 @@ src/
 │   ├── bank-display.tsx        # Animated bank counter with danger-zone glow
 │   ├── bust-overlay.tsx        # Full-screen bust notification with screen shake
 │   ├── dice.tsx                # SVG dice faces with rolling animation
-│   ├── player-list.tsx         # Player sidebar with bank buttons, turn indicators, and superpower badges
+│   ├── player-list.tsx         # Player sidebar with bank buttons, turn indicators, and leader crowns
 │   ├── roll-controls.tsx       # Sum input grid and keyboard shortcut handler
 │   ├── round-summary.tsx       # Between-round standings overlay
 │   ├── settings-dialog.tsx     # Mid-game settings editor
 │   ├── setup-screen.tsx        # Pre-game player and round configuration
-│   ├── top-bar.tsx             # Navigation bar with round info, event display, undo, and reset
+│   ├── top-bar.tsx             # Navigation bar with live leaderboard, round events, options, and theme controls
 │   └── winner-screen.tsx       # End-game leaderboard with confetti
 ├── lib/
 │   ├── sounds.ts               # Web Audio API synthesized sounds and haptic feedback
@@ -131,15 +132,11 @@ src/
 
 **Static export** — Built as a fully static site (`output: "export"` in `next.config.ts`). No server, no cold starts — deployable to any CDN.
 
-**Snapshot undo** — Before every roll or bank action, the full game state is captured in an `undoSnapshot`. Undo is a single atomic state swap, guaranteeing consistency across all fields including `timeBombRoll`, armed power state, and superpower usage.
+**Snapshot undo** — Before every roll or bank action, the full game state is captured in an `undoSnapshot`. Undo is a single atomic state swap, guaranteeing consistency across all fields.
 
 **Phase-based router** — The main page renders the correct screen based on `phase: "setup" | "playing" | "round_summary" | "finished"`. Overlays (`BustOverlay`, `RoundSummary`) layer on top via fixed positioning.
 
 **Turn order** — `getTurnOrder()` computes the live turn rotation accounting for Ghost Overdrive (ghosts appear twice), banked players (skipped), and inactive ghosts. `advanceRollerIndex()` advances past any players who should be skipped.
-
-**Armed powers** — Hot Streak and All-In use a pre-roll arm pattern: the player taps their badge to store their ID in `activeHotStreakPlayerId`/`activeAllInPlayerId`. On roll, these only fire if the current roller is the armed player, preventing cross-player activation bugs.
-
-**Post-roll powers** — Dice Whisperer, Dice Doctor, and Mirror Master each re-implement roll resolution from a base snapshot to guarantee atomicity. They all support the full event ruleset: Short Fuse safe zone, Golden Totals doubles, Resilient Bank halving, and Devil's Mercy reprieve.
 
 ---
 

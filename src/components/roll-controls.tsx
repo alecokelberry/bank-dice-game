@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   useGameStore, 
@@ -11,7 +11,6 @@ import {
 } from "@/store/game-store";
 import { Zap } from "lucide-react";
 import { playRollSound, playDoubleSound, playLucky7Sound, triggerHaptic } from "@/lib/sounds";
-import { toast } from "sonner";
 
 export function RollControls() {
   const handleRoll = useGameStore((s) => s.handleRoll);
@@ -23,9 +22,12 @@ export function RollControls() {
   const phase = useGameStore((s) => s.phase);
   const rollCount = useGameStore((s) => s.rollCount);
   const currentRoller = useGameStore(selectCurrentRoller);
+  const currentRollerIndex = useGameStore((s) => s.currentRollerIndex);
   const activeRoundEvent = useGameStore((s) => s.activeRoundEvent);
   const autoRollGhost = useGameStore((s) => s.autoRollGhost);
   const safeZoneRolls = useGameStore(getSafeZoneRolls);
+  const devilsMercyUsed = useGameStore((s) => s.devilsMercyUsed);
+  const resilientBankUsed = useGameStore((s) => s.resilientBankUsed);
 
   const [isRolling, setIsRolling] = useState(false);
   const isGhostTurn = currentRoller?.isGhost ?? false;
@@ -97,28 +99,46 @@ export function RollControls() {
   // Play special audio cues for doubles and lucky 7s
   useEffect(() => {
     if (phase !== "playing" || !lastDie1 || !lastDie2) return;
-    if (lastDie1 === lastDie2) {
+    const sum = lastDie1 + lastDie2;
+    const isGoldenDouble = activeRoundEvent === "golden_totals" && isDanger && (sum >= 10);
+    
+    if (lastDie1 === lastDie2 || isGoldenDouble) {
       playDoubleSound();
-    } else if (lastDie1 + lastDie2 === 7 && rollCount <= safeZoneRolls) {
+    } else if (sum === 7 && rollCount <= safeZoneRolls) {
       playLucky7Sound();
     }
-  }, [lastDie1, lastDie2, phase, rollCount, safeZoneRolls]);
+  }, [lastDie1, lastDie2, phase, rollCount, safeZoneRolls, activeRoundEvent, isDanger]);
 
-  // Auto-roll for ghosts
+  // Tracks if the ghost is currently taking its timed turn, rather than its ID.
+  // This allows the same ghost to roll multiple times in a round (e.g., Ghost Overdrive or consecutive turns).
+  const isAutoRollingRef = useRef(false);
+
+  // Auto-roll for ghosts.
   useEffect(() => {
     if (phase !== "playing" || isBust || !canRoll) return;
-    if (currentRoller?.isGhost) {
+    
+    // If it's the ghost's turn and we haven't already started their roll sequence:
+    if (currentRoller?.isGhost && !isAutoRollingRef.current) {
+      isAutoRollingRef.current = true;
+      
       const tId = setTimeout(() => {
-        toast(`👻 ${currentRoller.name} is rolling...`, { id: "ghost-roll", duration: 1500 });
         playRollSound();
         triggerHaptic("medium");
-        // Needs brief delay after sound before actually executing
+        
         setTimeout(() => {
+          // The moment before the store updates, we clear the flag so the NEXT turn can evaluate cleanly.
+          isAutoRollingRef.current = false;
           autoRollGhost();
         }, 300);
       }, 1000);
-      return () => clearTimeout(tId);
+
+      // If the turn changes (someone undos, or phase ends) before the ghost rolls, cancel the roll safely.
+      return () => {
+        clearTimeout(tId);
+        isAutoRollingRef.current = false;
+      };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, isBust, canRoll, currentRoller, autoRollGhost]);
 
   // Keyboard shortcuts: Space/R = virtual roll, D = doubles, U = undo
@@ -151,6 +171,35 @@ export function RollControls() {
         <div className="grid grid-cols-5 gap-2 px-2">
           {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((sum) => {
             const isSeven = sum === 7;
+            const isGoldenDouble = activeRoundEvent === "golden_totals" && isDanger && (sum === 10 || sum === 11);
+
+            let buttonColor = "";
+            let buttonLabel = "";
+            
+            if (isSeven) {
+              if (isDanger) {
+                if (activeRoundEvent === "devils_mercy" && !devilsMercyUsed) {
+                  buttonColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 border border-emerald-500/30";
+                  buttonLabel = "+7 (Mercy)";
+                } else if (activeRoundEvent === "resilient_bank" && !resilientBankUsed) {
+                  buttonColor = "bg-orange-500/80 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-400 border border-orange-500/30";
+                  buttonLabel = "÷2 BANK";
+                } else {
+                  buttonColor = "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500";
+                  buttonLabel = "BUST";
+                }
+              } else {
+                buttonColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500";
+                buttonLabel = activeRoundEvent === "heavenly_sevens" ? "+140" : "+70";
+              }
+            } else if (isGoldenDouble) {
+              buttonColor = "bg-violet-600/80 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 border border-violet-500/30";
+              buttonLabel = "2x";
+            } else {
+              buttonColor = isDanger
+                ? "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/25 border border-amber-300 dark:border-amber-500/20"
+                : "bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10";
+            }
 
             return (
               <motion.button
@@ -158,25 +207,12 @@ export function RollControls() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => enterSum(sum)}
                 disabled={!canRoll || isBust || isGhostTurn}
-                className={`
-                  relative flex flex-col items-center justify-center
-                  rounded-xl py-3 text-lg font-bold transition-all duration-150
-                  cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-                  ${
-                    isSeven
-                      ? isDanger
-                        ? "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500"
-                        : "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500"
-                      : isDanger
-                        ? "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/25 border border-amber-300 dark:border-amber-500/20"
-                        : "bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10"
-                  }
-                `}
+                className={`relative flex flex-col items-center justify-center rounded-xl py-3 text-lg font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${buttonColor}`}
               >
                 <span>{sum}</span>
-                {isSeven && (
+                {(isSeven || isGoldenDouble) && (
                   <span className="text-[10px] font-medium opacity-80 leading-tight">
-                    {isDanger ? "BUST" : activeRoundEvent === "heavenly_sevens" ? "+140" : "+70"}
+                    {buttonLabel}
                   </span>
                 )}
               </motion.button>
@@ -195,7 +231,7 @@ export function RollControls() {
               flex items-center justify-center gap-2
               rounded-xl py-3 text-lg font-bold transition-all duration-150
               cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-              bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:bg-white/20 border border-black/10 dark:border-white/10
+              bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10
             "
           >
             <span>12</span>
@@ -219,9 +255,7 @@ export function RollControls() {
           </motion.button>
         )}
 
-        <div className="text-center mt-2 text-xs text-gray-600">
-          Tap the sum you rolled with real dice
-        </div>
+
       </div>
     </div>
   );

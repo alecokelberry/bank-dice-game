@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/game-store";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, Zap, Sparkles } from "lucide-react";
+import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, Zap, ChevronDown } from "lucide-react";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -28,12 +28,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const setGhostsActiveUntilRound = useGameStore((s) => s.setGhostsActiveUntilRound);
   const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
   const setRoundEventsEnabled = useGameStore((s) => s.setRoundEventsEnabled);
-  const superpowersEnabled = useGameStore((s) => s.superpowersEnabled);
-  const setSuperpowersEnabled = useGameStore((s) => s.setSuperpowersEnabled);
 
   const [newName, setNewName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [isGameModesOpen, setIsGameModesOpen] = useState(false);
 
   const ghostCount = players.filter((p) => p.isGhost).length;
 
@@ -83,121 +82,120 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </div>
 
         {/* Game Modes */}
-        <div className="pt-2 border-t border-black/10 dark:border-white/10 space-y-3">
-          <label className="block text-sm font-medium text-gray-600 dark:text-gray-400">Game Modes</label>
-
-          {/* Round Events */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <div>
-                <p className="text-sm text-gray-900 dark:text-white leading-tight">Round Events</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400">A random event each round</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={roundEventsEnabled}
-              disabled={phase !== "setup"}
-              onClick={() => setRoundEventsEnabled(!roundEventsEnabled)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${roundEventsEnabled ? "bg-amber-500" : "bg-black/10 dark:bg-white/20"}`}
-            >
-              <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${roundEventsEnabled ? "translate-x-4" : "translate-x-0"}`} />
-            </button>
-          </div>
-
-          {/* Superpowers */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-pink-400 shrink-0" />
-              <div>
-                <p className="text-sm text-gray-900 dark:text-white leading-tight">Superpowers</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400">Random abilities each round</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={superpowersEnabled}
-              disabled={phase !== "setup"}
-              onClick={() => setSuperpowersEnabled(!superpowersEnabled)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${superpowersEnabled ? "bg-pink-500" : "bg-black/10 dark:bg-white/20"}`}
-            >
-              <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${superpowersEnabled ? "translate-x-4" : "translate-x-0"}`} />
-            </button>
-          </div>
-          {/* Ghost Players */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Ghost className="w-3.5 h-3.5 text-violet-400 shrink-0" />
-              <div>
-                <p className="text-sm text-gray-900 dark:text-white leading-tight">Ghost Players</p>
-                <p className="text-[11px] text-gray-600 dark:text-gray-400">Automated AI players</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={ghostCount > 0}
-              disabled={phase !== "setup"}
-              onClick={() => setGhostCount(ghostCount > 0 ? 0 : 1)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${ghostCount > 0 ? "bg-violet-500" : "bg-black/10 dark:bg-white/20"}`}
-            >
-              <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${ghostCount > 0 ? "translate-x-4" : "translate-x-0"}`} />
-            </button>
-          </div>
+        <div className="pt-2 border-t border-black/10 dark:border-white/10">
+          <button
+            onClick={() => setIsGameModesOpen(!isGameModesOpen)}
+            className="w-full flex items-center justify-between group cursor-pointer outline-none"
+          >
+            <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 group-hover:text-indigo-500 transition-colors cursor-pointer">Game Modes</label>
+            <ChevronDown className={`w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-transform duration-200 ${isGameModesOpen ? "rotate-180" : ""}`} />
+          </button>
 
           <AnimatePresence>
-            {ghostCount > 0 && (
+            {isGameModesOpen && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="space-y-3 overflow-hidden"
+                className="overflow-hidden"
               >
-                {/* Number of ghosts slider */}
-                <div>
-                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
-                    <span>Number of ghosts</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{ghostCount}</span>
+                <div className="pt-3 space-y-3">
+                  {/* Round Events */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-900 dark:text-white leading-tight">Round Events</p>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-400">A random event each round</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={roundEventsEnabled}
+                      disabled={phase !== "setup"}
+                      onClick={() => setRoundEventsEnabled(!roundEventsEnabled)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${roundEventsEnabled ? "bg-amber-500" : "bg-black/10 dark:bg-white/20"}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${roundEventsEnabled ? "translate-x-4" : "translate-x-0"}`} />
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={4}
-                    value={ghostCount}
-                    disabled={phase !== "setup"}
-                    onChange={(e) => setGhostCount(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:bg-violet-500 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full"
-                  />
-                </div>
 
-                {/* Active until round slider */}
-                <div>
-                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
-                    <span>Active until round</span>
-                    <span className="text-gray-900 dark:text-white font-medium">
-                      {ghostsActiveUntilRound === totalRounds ? "All" : ghostsActiveUntilRound}
-                    </span>
+                  {/* Ghost Players */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Ghost className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-900 dark:text-white leading-tight">Ghost Players</p>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-400">Automated AI players</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={ghostCount > 0}
+                      disabled={phase !== "setup"}
+                      onClick={() => setGhostCount(ghostCount > 0 ? 0 : 1)}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${ghostCount > 0 ? "bg-violet-500" : "bg-black/10 dark:bg-white/20"}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${ghostCount > 0 ? "translate-x-4" : "translate-x-0"}`} />
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={totalRounds}
-                    value={ghostsActiveUntilRound}
-                    disabled={phase !== "setup"}
-                    onChange={(e) => setGhostsActiveUntilRound(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:bg-violet-500 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full"
-                  />
+
+                  <AnimatePresence>
+                    {ghostCount > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="space-y-3 overflow-hidden"
+                      >
+                        {/* Number of ghosts slider */}
+                        <div>
+                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
+                            <span>Number of ghosts</span>
+                            <span className="text-gray-900 dark:text-white font-medium">{ghostCount}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={1}
+                            max={4}
+                            value={ghostCount}
+                            disabled={phase !== "setup"}
+                            onChange={(e) => setGhostCount(parseInt(e.target.value))}
+                            className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:bg-violet-500 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full"
+                          />
+                        </div>
+
+                        {/* Active until round slider */}
+                        <div>
+                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1.5">
+                            <span>Active until round</span>
+                            <span className="text-gray-900 dark:text-white font-medium">
+                              {ghostsActiveUntilRound === totalRounds ? "All" : ghostsActiveUntilRound}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={1}
+                            max={totalRounds}
+                            value={ghostsActiveUntilRound}
+                            disabled={phase !== "setup"}
+                            onChange={(e) => setGhostsActiveUntilRound(parseInt(e.target.value))}
+                            className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-lg appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:bg-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:bg-violet-500 [&::-moz-range-thumb]:border-none [&::-moz-range-thumb]:rounded-full"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {phase !== "setup" && (
+                    <p className="text-xs text-gray-600 mt-1">Can&apos;t clear/modify ghosts mid-game</p>
+                  )}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-
-          {phase !== "setup" && (
-            <p className="text-xs text-gray-600 mt-1">Can&apos;t clear/modify ghosts mid-game</p>
-          )}
         </div>
 
 
@@ -243,7 +241,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
                     style={{ backgroundColor: p.color }}
                   >
-                    {p.name.slice(0, 2).toUpperCase()}
+                    {p.isGhost ? <Ghost className="w-3 h-3" /> : p.name.slice(0, 2).toUpperCase()}
                   </div>
 
                   {/* Inline rename on double-click */}
@@ -265,7 +263,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         setEditName(p.name);
                       }}
                     >
-                      {p.isGhost && <Ghost className="w-3 h-3 text-gray-600 dark:text-gray-400 shrink-0" />}
                       {p.name}
                     </span>
                   )}
