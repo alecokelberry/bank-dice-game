@@ -16,7 +16,7 @@ This game is a digital adaptation of **BANK!**, a physical dice game published b
 
 ### The Basics
 
-1. **Setup** — Add 2–8 players (or AI Ghosts), choose a round count, and optionally enable Round Events and Superpowers.
+1. **Setup** — Add 2–8 players (or AI Ghosts), choose a round count, and optionally enable Round Events.
 2. **Safe Zone** (rolls 1–3 by default) — Every roll adds its sum to the shared bank. Rolling a **7 is lucky and adds +70 pts**.
 3. **Danger Zone** (roll 4+) — Rolling **doubles multiplies the bank 2×**. Rolling a **7 busts** the bank and everyone still in loses everything.
 4. **Bank** anytime after roll 1 to lock in your share of the current bank value as score.
@@ -60,26 +60,7 @@ When enabled, a random event is picked at the start of each round to shake up th
 | **Resilient Bank**  | The **first danger-zone 7** only **halves** the bank instead of wiping it.              |
 | **Time Bomb**       | A hidden roll between 4 and 10 is rigged to bust. Nobody knows which one until it hits. |
 
-> Events can stack interestingly — a Short Fuse + Time Bomb round is a panic-inducing experience.
-
----
-
-## Superpowers
-
-When enabled, each player is assigned a unique ability at the start of every round. Powers are single-use and reset each round.
-
-| Power              | Type       | How It Works                                                                          |
-| ------------------ | ---------- | ------------------------------------------------------------------------------------- |
-| **Second Chance**  | Passive    | If a 7 busts the bank, your power saves the entire bank and the round continues.      |
-| **Dice Whisperer** | Post-roll  | After any roll, choose to reroll one or both dice before the result locks in.         |
-| **Hot Streak**     | Armed      | Arm it before your roll. A danger-zone 7 is silently swapped for a safe result.       |
-| **Mirror Master**  | Post-roll  | Copy the exact dice from the previous roll instead of rolling fresh.                  |
-| **Dice Doctor**    | Post-roll  | After your roll, nudge one die up or down by 1.                                       |
-| **Bank Parasite**  | Passive    | Every time any other player banks this round, you silently gain +100 points.          |
-| **All-In**         | Armed      | Arm it before your roll. Doubles give **5×** the bank. Roll a 7 and lose your entire accumulated score. |
-
-> **Armed powers** (Hot Streak, All-In) must be activated via the badge before you roll — they only fire on your own turn. **Post-roll powers** (Whisperer, Doctor, Mirror Master) become available after the dice land. **Passive powers** trigger automatically with no input.
-
+> Events do not stack — there is only ever **one** active event per round.
 ---
 
 ## AI Ghost Players
@@ -97,7 +78,6 @@ Ghosts are automated opponents that follow a fixed aggressive strategy:
 
 - **2–8 players** with custom names, assigned colors, and configurable turn order
 - **AI Ghost Players** with aggressive bank-building strategy
-- **7 Superpowers** — unique abilities assigned fresh each round
 - **9 Round Events** — random rule modifiers that keep every round unpredictable
 - **Configurable round count** — 10, 15, or 20 rounds
 - **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual roller
