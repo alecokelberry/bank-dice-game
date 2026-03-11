@@ -80,6 +80,7 @@ Ghosts are automated opponents that follow a fixed aggressive strategy:
 - **AI Ghost Players** with aggressive bank-building strategy
 - **Live Leaderboards** — track rankings in real-time during gameplay
 - **9 Round Events** — random rule modifiers that keep every round unpredictable
+- **Interactive Event Badges** — dynamic, clickable badges that change color and icon based on the active event
 - **Configurable round count** — 10, 15, or 20 rounds
 - **Dual input modes** — tap sum buttons for physical dice, or use the built-in virtual roller
 - **Banking streak bonus** — +25 pts for 3 consecutive banks, +50 pts for 5+
@@ -87,7 +88,7 @@ Ghosts are automated opponents that follow a fixed aggressive strategy:
 - **Synthesized sound effects** — all audio generated via Web Audio API (zero external files)
 - **Haptic feedback** — vibration on mobile for rolls, banks, and busts
 - **State persistence** — game state survives page refreshes via `localStorage`
-- **Responsive design** — mobile-first layout with light/dark mode support
+- **Modern, Responsive UI** — mobile-first layout with glassmorphism, animated gradients, and seamless light/dark mode support
 - **Between-round summaries** — ranked standings with banked/bust status shown after each round
 - **Mid-game settings** — edit player names and options without restarting
 
@@ -105,15 +106,15 @@ src/
 │   ├── ui/
 │   │   ├── button.tsx          # Reusable button with variant/size props
 │   │   └── dialog.tsx          # Animated modal dialog component
-│   ├── bank-display.tsx        # Animated bank counter with danger-zone glow
+│   ├── bank-display.tsx        # Animated bank counter with dynamic round event badges and danger-zone glow
 │   ├── bust-overlay.tsx        # Full-screen bust notification with screen shake
 │   ├── dice.tsx                # SVG dice faces with rolling animation
 │   ├── player-list.tsx         # Player sidebar with bank buttons, turn indicators, and leader crowns
 │   ├── roll-controls.tsx       # Sum input grid and keyboard shortcut handler
 │   ├── round-summary.tsx       # Between-round standings overlay
 │   ├── settings-dialog.tsx     # Mid-game settings editor
-│   ├── setup-screen.tsx        # Pre-game player and round configuration
-│   ├── top-bar.tsx             # Navigation bar with live leaderboard, round events, options, and theme controls
+│   ├── setup-screen.tsx        # High-polish, glassmorphic pre-game player and rules configuration
+│   ├── top-bar.tsx             # Responsive nav bar with undo, virtual dice, and customizable light/dark themes
 │   └── winner-screen.tsx       # End-game leaderboard with confetti
 ├── lib/
 │   ├── sounds.ts               # Web Audio API synthesized sounds and haptic feedback
