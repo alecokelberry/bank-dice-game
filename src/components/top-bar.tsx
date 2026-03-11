@@ -61,14 +61,12 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
 
   return (
     <>
-      <header className="flex items-center px-4 py-3 bg-white/60 dark:bg-gray-900/60 border-b border-gray-200/60 dark:border-gray-700/50 backdrop-blur-md shadow-sm">
+      <header className="flex flex-wrap items-center justify-between gap-y-2 px-2 sm:px-4 py-2 bg-white/60 dark:bg-gray-900/60 border-b border-gray-200/60 dark:border-gray-700/50 backdrop-blur-md shadow-sm relative">
         
-        {/* Left Section: Logo & Controls */}
-        <div className="flex flex-1 items-center gap-4">
-          <div className="text-2xl font-black bg-linear-to-br from-indigo-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm select-none tracking-tight">BANK!</div>
-          
+        {/* Left Section: Controls */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {(phase === "playing" || phase === "round_summary") && (
-            <div className="flex items-center gap-3 border-l border-gray-200 dark:border-gray-700 pl-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                 Round <span className="text-indigo-500">{currentRound}/{totalRounds}</span>
               </div>
@@ -83,7 +81,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
                   >
                     Roll #{rollCount || "—"}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-0.5">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -112,9 +110,9 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           )}
         </div>
 
-        {/* Center Section: Event Badge */}
-        <div className="flex flex-1 justify-center shrink-0">
-          {phase === "playing" && roundEventsEnabled && activeEvent && !isBust && (
+        {/* Center Section: Event Badge (breaks to new row on mobile, centered on large screens) */}
+        {phase === "playing" && roundEventsEnabled && activeEvent && !isBust && (
+          <div className="flex justify-center order-last w-full sm:w-auto sm:order-0 shrink-0 sm:absolute sm:left-1/2 sm:-translate-x-1/2 mt-1 sm:mt-0">
             <div 
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full border bg-amber-500/10 border-amber-500/20 shadow-sm cursor-help transition-transform hover:scale-105" 
               title={activeEvent.description}
@@ -124,38 +122,36 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
                 {activeEvent.name}
               </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Right Section: Action buttons */}
-        <div className="flex flex-1 items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-0.5 sm:gap-1 ml-auto">
           {phase === "playing" && (
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setLeaderboardOpen(true)}
               title="Live Leaderboard"
+              className="h-8 w-8 sm:h-9 sm:w-9"
             >
               <Trophy className="w-4 h-4 text-amber-500" />
             </Button>
           )}
 
-          {/* Always show in setup. In playing phase, only show if enabled */}
-          {(phase === "setup" || roundEventsEnabled) && (
-            <Button variant="ghost" size="icon" onClick={() => setEventModalOpen(true)} title="Round Events">
+          {phase === "setup" && (
+            <Button variant="ghost" size="icon" onClick={() => setEventModalOpen(true)} title="Round Events" className="h-8 w-8 sm:h-9 sm:w-9">
               <Sparkles className="w-4 h-4 text-fuchsia-500" />
             </Button>
           )}
 
-          {(phase === "setup" || hasGhosts) && (
-            <Button variant="ghost" size="icon" onClick={() => setGhostModalOpen(true)} title="Ghost Players">
+          {phase === "setup" && (
+            <Button variant="ghost" size="icon" onClick={() => setGhostModalOpen(true)} title="Ghost Players" className="h-8 w-8 sm:h-9 sm:w-9">
               <Ghost className="w-4 h-4 text-violet-500" />
             </Button>
           )}
-
-
           
-          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme" className="h-8 w-8 sm:h-9 sm:w-9">
             {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </Button>
 
@@ -165,6 +161,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               size="icon"
               onClick={() => setConfirmReset(true)}
               title="Reset game"
+              className="h-8 w-8 sm:h-9 sm:w-9"
             >
               <RotateCcw className="w-4 h-4" />
             </Button>

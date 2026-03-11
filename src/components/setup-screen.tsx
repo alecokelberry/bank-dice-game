@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, Zap, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, Sparkles, ChevronDown } from "lucide-react";
 
 export function SetupScreen() {
   const players = useGameStore((s) => s.players);
@@ -38,16 +38,6 @@ export function SetupScreen() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[85vh] py-10 px-6 gap-7 max-w-sm mx-auto w-full">
-      {/* Title */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-2"
-      >
-        <h1 className="text-6xl font-black tracking-tight mb-2 bg-gradient-to-br from-indigo-600 via-purple-600 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm">BANK!</h1>
-        <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">The dice game of risk & reward</p>
-      </motion.div>
-
       {/* Round count selector */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -103,7 +93,7 @@ export function SetupScreen() {
                 {/* Round Events toggle */}
                 <div className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2.5">
-                    <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                    <Sparkles className="w-4 h-4 text-fuchsia-500 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight">Round Events</p>
                     </div>
@@ -113,7 +103,7 @@ export function SetupScreen() {
                     role="switch"
                     aria-checked={roundEventsEnabled}
                     onClick={() => setRoundEventsEnabled(!roundEventsEnabled)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 ${roundEventsEnabled ? "bg-amber-500" : "bg-black/10 dark:bg-white/20"}`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 ${roundEventsEnabled ? "bg-fuchsia-500" : "bg-black/10 dark:bg-white/20"}`}
                   >
                     <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${roundEventsEnabled ? "translate-x-5" : "translate-x-0"}`} />
                   </button>
