@@ -50,15 +50,15 @@ When enabled, a random event is picked at the start of each round to shake up th
 
 | Event               | Effect                                                                                  |
 | ------------------- | --------------------------------------------------------------------------------------- |
-| **Triple Threat**   | Doubles multiply the bank by **3×** instead of 2×.                                     |
-| **Extended Safety** | The safe zone lasts for **5 rolls** instead of 3. More room to build the bank.         |
-| **Ghost Overdrive** | Every Ghost takes **two turns** this round instead of one.                              |
-| **Heavenly Sevens** | Safe-zone 7s give **+140** to the bank instead of +70.                                 |
-| **Devil's Mercy**   | The **first danger-zone 7** adds 7 to the bank rather than busting it.                 |
-| **Short Fuse**      | The safe zone lasts only **1 roll**. Danger hits immediately.                           |
-| **Golden Totals**   | Any roll totaling **10, 11, or 12** counts as doubles in the danger zone.               |
-| **Resilient Bank**  | The **first danger-zone 7** only **halves** the bank instead of wiping it.              |
-| **Time Bomb**       | A hidden roll between 4 and 10 is rigged to bust. Nobody knows which one until it hits. |
+| **Triple Threat**   | Hit doubles and the bank triples instead of doubling.                                                                      |
+| **Extended Safety** | Safe zone runs for 5 rolls this round instead of 3.                                                                        |
+| **Ghost Overdrive** | Every ghost rolls twice per turn this round.                                                                                |
+| **Heavenly Sevens** | 7s in the safe zone are worth +140 instead of +70.                                                                         |
+| **Devil's Mercy**   | The first 7 in the danger zone won't bust — it just adds 7 and play continues.                                             |
+| **Short Fuse**      | Safe zone is only 1 roll this round. Danger comes fast.                                                                    |
+| **Golden Totals**   | Any roll totaling 10, 11, or 12 counts as doubles.                                                                         |
+| **Resilient Bank**  | The first danger-zone 7 halves the bank instead of busting it.                                                             |
+| **Time Bomb**       | 7 won't bust this round — but one number between 2 and 12 is secretly rigged to. Roll it in the danger zone and it's over. |
 
 > Events do not stack — there is only ever **one** active event per round.
 ---
