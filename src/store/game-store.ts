@@ -8,7 +8,6 @@ export interface Player {
   name: string;
   score: number;
   color: string;
-  consecutiveBanks: number;
   isGhost?: boolean;
 }
 
@@ -148,7 +147,6 @@ function makeDefaultPlayer(name: string, colorIndex: number): Player {
     name: name.trim(),
     score: 0,
     color: PLAYER_COLORS[colorIndex % PLAYER_COLORS.length],
-    consecutiveBanks: 0,
   };
 }
 
@@ -281,7 +279,6 @@ export const useGameStore = create<GameState>()(
                 name: `Ghost (${currentGhosts.length + i + 1})`, // Updated naming convention
                 color: "#8b5cf6", // Violet color for ghosts
                 score: 0,
-                consecutiveBanks: 0,
                 isGhost: true,
               });
             }
@@ -314,7 +311,6 @@ export const useGameStore = create<GameState>()(
         const basePlayers = state.players.map((p) => ({
           ...p,
           score: 0,
-          consecutiveBanks: 0,
         }));
 
         set({
@@ -360,7 +356,7 @@ export const useGameStore = create<GameState>()(
           resilientBankUsed: false,
           roundSummary: null,
           roundSummaryRound: 0,
-          players: state.players.map((p) => ({ ...p, score: 0, consecutiveBanks: 0 })),
+          players: state.players.map((p) => ({ ...p, score: 0 })),
         });
       },
 
@@ -479,25 +475,16 @@ export const useGameStore = create<GameState>()(
 
         const snapshot = takeSnapshot(state);
 
-        const calculateBankAmount = (p: Player) => {
-          let amt = state.bank;
-          if (p.consecutiveBanks >= 5) amt += 50;
-          else if (p.consecutiveBanks >= 3) amt += 25;
-          return amt;
-        };
-
-        const amount = calculateBankAmount(player);
+        const amount = state.bank;
 
         let updatedPlayers = state.players.map((p) =>
           p.id === playerId
-            ? { ...p, score: p.score + amount, consecutiveBanks: p.consecutiveBanks + 1 }
+            ? { ...p, score: p.score + amount }
             : p
         );
 
         let newBanked = [...state.bankedThisRound, playerId];
-        const streakBonus = player.consecutiveBanks >= 5 ? 50 : player.consecutiveBanks >= 3 ? 25 : 0;
         let logMsg = `${player.name} BANKED ${amount} pts! (Total: ${updatedPlayers.find(p => p.id === playerId)!.score})`;
-        if (streakBonus > 0) logMsg += ` [+${streakBonus} streak bonus!]`;
 
         // Check if every human player has banked
         const allHumansBanked = updatedPlayers
@@ -509,8 +496,7 @@ export const useGameStore = create<GameState>()(
           const activeGhosts = updatedPlayers.filter((p) => p.isGhost && state.currentRound <= state.ghostsActiveUntilRound);
           updatedPlayers = updatedPlayers.map((p) => {
             if (activeGhosts.some((g) => g.id === p.id)) {
-               const ghostAmount = calculateBankAmount(p);
-               return { ...p, score: p.score + ghostAmount, consecutiveBanks: p.consecutiveBanks + 1 };
+               return { ...p, score: p.score + state.bank };
             }
             return p;
           });
@@ -522,7 +508,7 @@ export const useGameStore = create<GameState>()(
               playerId: p.id,
               playerName: p.name,
               banked: isBanked,
-              amount: isBanked ? calculateBankAmount(state.players.find(x => x.id === p.id)!) : 0,
+              amount: isBanked ? state.bank : 0,
             };
           });
 
@@ -600,12 +586,7 @@ export const useGameStore = create<GameState>()(
           };
         });
 
-        // Reset banking streaks for players who didn't bank this round
-        const streakResetPlayers = state.players.map((p) => ({
-          ...p,
-          consecutiveBanks: state.bankedThisRound.includes(p.id) ? p.consecutiveBanks : 0,
-        }));
-        const updatedPlayers = streakResetPlayers;
+        const updatedPlayers = state.players;
 
         set({
           players: updatedPlayers,
