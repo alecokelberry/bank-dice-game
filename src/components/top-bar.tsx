@@ -56,7 +56,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
 
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-y-2 px-2 sm:px-4 py-2 bg-gray-900/60 border-b border-gray-700/50 backdrop-blur-md shadow-sm relative">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-y-2 px-2 sm:px-4 py-2 bg-gray-950/90 border-b border-white/10 backdrop-blur-xl shadow-sm relative">
 
         {/* Left Section */}
         <div className="flex items-center gap-2">

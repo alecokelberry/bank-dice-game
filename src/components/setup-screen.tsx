@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, ChevronDown } from "lucide-react";
+import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, ChevronDown, Sparkles } from "lucide-react";
 
 export function SetupScreen() {
   const players = useGameStore((s) => s.players);
@@ -112,6 +112,7 @@ export function SetupScreen() {
                 {/* Round Events toggle */}
                 <div className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2.5">
+                    <Sparkles className="w-4 h-4 text-white shrink-0" />
                     <p className="text-sm font-medium text-white leading-tight">Round Events</p>
                   </div>
                   <button
@@ -130,6 +131,7 @@ export function SetupScreen() {
                 {/* Ghost Players toggle */}
                 <div className="flex items-center justify-between py-1">
                   <div className="flex items-center gap-2.5">
+                    <Ghost className="w-4 h-4 text-white shrink-0" />
                     <p className="text-sm font-medium text-white leading-tight">Ghost Players</p>
                   </div>
                   <button
@@ -364,7 +366,7 @@ export function SetupScreen() {
           size="lg"
           onClick={startGame}
           disabled={players.length < 2}
-          className="w-full relative overflow-hidden group bg-emerald-500 hover:bg-emerald-400 text-white text-xl font-black py-7 rounded-2xl transition-all duration-300 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-15px_rgba(16,185,129,0.7)] hover:-translate-y-1 disabled:bg-gray-800 disabled:text-gray-500 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
+          className="w-full relative overflow-hidden group bg-emerald-500 hover:bg-emerald-400 text-white/90 text-xl font-black py-7 rounded-2xl transition-all duration-300 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)] hover:shadow-[0_0_60px_-15px_rgba(16,185,129,0.7)] hover:-translate-y-1 disabled:bg-gray-800 disabled:text-gray-500 disabled:shadow-none disabled:translate-y-0 disabled:cursor-not-allowed"
         >
           <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-400 to-teal-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           <span className="relative flex items-center justify-center">

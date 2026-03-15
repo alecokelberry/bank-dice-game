@@ -139,7 +139,7 @@ function pickRandomEvent(hasActiveGhosts: boolean): { id: string; timeBombRoll: 
   const event = pool[Math.floor(Math.random() * pool.length)];
   return {
     id: event.id,
-    timeBombRoll: event.id === "time_bomb" ? Math.floor(Math.random() * 11) + 2 : null,
+    timeBombRoll: event.id === "time_bomb" ? [2,3,4,5,6,8,9,10,11,12][Math.floor(Math.random() * 10)] : null,
   };
 }
 
@@ -397,10 +397,9 @@ export const useGameStore = create<GameState>()(
         // Golden Totals: 10/11/12 in danger zone count as doubles
         const isEffectiveDouble = isDouble ||
           (state.activeRoundEvent === "golden_totals" && rc >= safeZoneLimit && (sum === 10 || sum === 11 || sum === 12));
-        // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 doesn't bust this round)
-        // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 doesn't bust unless it's the bomb roll)
+        // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 is always safe this round)
         const isTimeBomb = state.activeRoundEvent === "time_bomb" &&
-          state.timeBombRoll !== null && sum === state.timeBombRoll;
+          state.timeBombRoll !== null && sum !== 7 && sum === state.timeBombRoll;
         let bankAfter = state.bank;
         let wasBust = false;
 
