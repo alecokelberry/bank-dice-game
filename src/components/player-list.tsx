@@ -5,11 +5,17 @@ import { motion } from "framer-motion";
 import { useGameStore, selectCanBank, selectCurrentRoller } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
-import { Landmark, Check, Trophy, Crown, Dices, Ghost } from "lucide-react";
-import { playBankSound, playRollSound, triggerHaptic } from "@/lib/sounds";
+import { Landmark, Check, Dices, Ghost } from "lucide-react";
+import { playBankSound, triggerHaptic } from "@/lib/sounds";
 
-/** Circular avatar showing player initials on their assigned color. */
-function PlayerAvatar({ name, color, isGhost, isLeader }: { name: string; color: string; isGhost?: boolean; isLeader?: boolean }) {
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
+/** Circular avatar: ghost icon for ghosts, rank number for humans. */
+function PlayerAvatar({ color, isGhost, rank, name }: { color: string; isGhost?: boolean; rank?: number; name?: string }) {
   if (isGhost) {
     return (
       <div
@@ -20,25 +26,17 @@ function PlayerAvatar({ name, color, isGhost, isLeader }: { name: string; color:
       </div>
     );
   }
-
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
     <div
-      className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
       style={{ backgroundColor: color }}
     >
-      {isLeader ? <Crown className="w-5 h-5 text-amber-300 fill-amber-300" /> : initials}
+      <span className="text-[11px] font-black leading-none">{rank != null ? ordinal(rank) : "—"}</span>
     </div>
   );
 }
 
-export function PlayerList() {
+export function PlayerList({ mode = "bank" }: { mode?: "leaderboard" | "bank" }) {
   const players = useGameStore((s) => s.players);
   const bankedThisRound = useGameStore((s) => s.bankedThisRound);
   const handleBank = useGameStore((s) => s.handleBank);
@@ -58,11 +56,14 @@ export function PlayerList() {
     (p) => !p.isGhost || currentRound <= ghostsActiveUntilRound
   );
 
-  // Exclude ghosts from being considered "leaders"
+  // Compute live rank for each human player by score (ties share the same rank)
   const humanPlayers = visiblePlayers.filter(p => !p.isGhost);
-  const maxScore = humanPlayers.length > 0 
-    ? Math.max(...humanPlayers.map((p) => p.score)) 
-    : 0;
+  const sortedByScore = [...humanPlayers].sort((a, b) => b.score - a.score);
+  const rankMap = new Map<string, number>();
+  sortedByScore.forEach((p, i) => {
+    const rank = i === 0 || sortedByScore[i - 1].score !== p.score ? i + 1 : rankMap.get(sortedByScore[i - 1].id)!;
+    rankMap.set(p.id, rank);
+  });
 
   // Keyboard shortcuts: B = bank first unbanked player, 1-9 = bank specific player
   useEffect(() => {
@@ -103,15 +104,56 @@ export function PlayerList() {
 
   return (
     <div className="w-full space-y-2">
-      <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider px-1">
-        Players
-      </h3>
       <div className="space-y-2">
         {visiblePlayers.map((player, idx) => {
           const hasBanked = bankedThisRound.includes(player.id);
-          const isLeader = !player.isGhost && player.score > 0 && player.score === maxScore;
+          const rank = rankMap.get(player.id);
           const isCurrentRoller = currentRoller?.id === player.id && !isBust;
 
+          if (mode === "leaderboard") {
+            return (
+              <motion.div
+                key={player.id}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className={`flex items-center gap-3 rounded-xl p-3 transition-all duration-300 ${
+                  player.isGhost ? "opacity-70" : ""
+                } ${
+                  hasBanked
+                    ? "bg-emerald-500/10 border border-emerald-500/20"
+                    : isCurrentRoller
+                      ? "bg-indigo-500/10 border border-indigo-500/30"
+                      : "bg-white/5 border border-white/10"
+                }`}
+              >
+                <div className="relative">
+                  <PlayerAvatar color={player.color} isGhost={player.isGhost} rank={rank} name={player.name} />
+                  {isCurrentRoller && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center"
+                    >
+                      <Dices className="w-2.5 h-2.5 text-white" />
+                    </motion.div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-white truncate">{player.isGhost ? "Ghost" : player.name}</div>
+                </div>
+                {hasBanked && (
+                  <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                )}
+                {!player.isGhost && (
+                  <div className="text-right shrink-0">
+                    <div className="text-lg font-black tabular-nums text-white">{player.score}</div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          }
 
           return (
             <motion.div
@@ -124,36 +166,36 @@ export function PlayerList() {
                 player.isGhost ? "opacity-80" : ""
               } ${
                 hasBanked
-                  ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20"
+                  ? "bg-emerald-500/10 border border-emerald-500/20"
                   : isCurrentRoller
-                    ? "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 shadow-md shadow-indigo-500/5"
+                    ? "bg-indigo-500/10 border border-indigo-500/30 shadow-md shadow-indigo-500/5"
                     : canBank && !player.isGhost
-                      ? "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 hover:border-black/20 dark:hover:border-white/20"
-                      : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10"
+                      ? "bg-white/5 border border-white/10 hover:border-white/20"
+                      : "bg-white/5 border border-white/10"
               }`}
             >
               {/* Avatar with optional roller dice icon */}
               <div className="relative">
-                <PlayerAvatar name={player.name} color={player.color} isGhost={player.isGhost} isLeader={isLeader} />
-                {isCurrentRoller && !isLeader && (
+                <PlayerAvatar color={player.color} isGhost={player.isGhost} rank={rank} name={player.name} />
+                {isCurrentRoller && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-1 -right-1 w-4 h-4 bg-indigo-500 rounded-full flex items-center justify-center"
                   >
-                    <Dices className="w-2.5 h-2.5 text-gray-900 dark:text-white" />
+                    <Dices className="w-2.5 h-2.5 text-white" />
                   </motion.div>
                 )}
               </div>
 
-              {/* Player name and score */}
+              {/* Player name */}
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
-                  {player.name}
+                <div className="font-semibold text-white truncate flex items-center gap-1.5">
+                  {player.isGhost ? "Ghost" : player.name}
                 </div>
               </div>
 
-              {/* Bank button or "Banked" badge or "Ghost" label */}
+              {/* Bank button or "Banked" badge */}
               {phase === "playing" && (
                 <>
                   {hasBanked ? (
@@ -186,7 +228,6 @@ export function PlayerList() {
           );
         })}
       </div>
-
     </div>
   );
 }

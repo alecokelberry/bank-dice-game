@@ -109,6 +109,20 @@ export function playClickSound() {
   playTone(600, 0.05, "sine", 0.06);
 }
 
+/** Call on first user interaction to silently unlock AudioContext, preventing an audible pop on first real sound. */
+export function primeAudio() {
+  try {
+    const ctx = getCtx();
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    const osc = ctx.createOscillator();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.01);
+  } catch { /* silent */ }
+}
+
 export function triggerHaptic(pattern: "light" | "medium" | "heavy" = "light") {
   try {
     if (navigator.vibrate) {

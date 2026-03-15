@@ -4,12 +4,11 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   useGameStore, 
-  selectCanRoll, 
-  selectIsInDangerZone, 
+  selectCanRoll,
+  selectIsInDangerZone,
   selectCurrentRoller,
-  getSafeZoneRolls
+  getSafeZoneRolls,
 } from "@/store/game-store";
-import { Zap } from "lucide-react";
 import { playRollSound, playDoubleSound, playLucky7Sound, triggerHaptic } from "@/lib/sounds";
 
 export function RollControls() {
@@ -24,14 +23,12 @@ export function RollControls() {
   const currentRoller = useGameStore(selectCurrentRoller);
   const currentRollerIndex = useGameStore((s) => s.currentRollerIndex);
   const activeRoundEvent = useGameStore((s) => s.activeRoundEvent);
-  const autoRollGhost = useGameStore((s) => s.autoRollGhost);
   const safeZoneRolls = useGameStore(getSafeZoneRolls);
   const devilsMercyUsed = useGameStore((s) => s.devilsMercyUsed);
   const resilientBankUsed = useGameStore((s) => s.resilientBankUsed);
 
   const [isRolling, setIsRolling] = useState(false);
   const isGhostTurn = currentRoller?.isGhost ?? false;
-
   /**
    * Converts a non-doubles sum from physical dice into a (die1, die2) pair.
    * Ensures the two dice don't accidentally form doubles when they shouldn't.
@@ -39,6 +36,7 @@ export function RollControls() {
   const enterSum = useCallback(
     (sum: number) => {
       if (!canRoll) return;
+      playRollSound();
 
       let d1: number, d2: number;
       // 12 can only physically be 6+6 (doubles), but in safe rounds it's
@@ -78,6 +76,7 @@ export function RollControls() {
   // Doubles are entered directly — the actual die value doesn't matter
   const enterDoubles = useCallback(() => {
     if (!canRoll) return;
+    playRollSound();
     triggerHaptic("light");
     handleRoll(1, 1);
   }, [canRoll, handleRoll]);
@@ -96,50 +95,20 @@ export function RollControls() {
     }, 500);
   }, [canRoll, isRolling, handleRoll]);
 
-  // Play special audio cues for doubles and lucky 7s
+  // Play special audio cues for doubles and lucky 7s (skip on initial mount)
+  const mountedRef = useRef(false);
   useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
     if (phase !== "playing" || !lastDie1 || !lastDie2) return;
     const sum = lastDie1 + lastDie2;
     const isGoldenDouble = activeRoundEvent === "golden_totals" && isDanger && (sum >= 10);
-    
+
     if (lastDie1 === lastDie2 || isGoldenDouble) {
       playDoubleSound();
     } else if (sum === 7 && rollCount <= safeZoneRolls) {
       playLucky7Sound();
     }
   }, [lastDie1, lastDie2, phase, rollCount, safeZoneRolls, activeRoundEvent, isDanger]);
-
-  // Tracks if the ghost is currently taking its timed turn, rather than its ID.
-  // This allows the same ghost to roll multiple times in a round (e.g., Ghost Overdrive or consecutive turns).
-  const isAutoRollingRef = useRef(false);
-
-  // Auto-roll for ghosts.
-  useEffect(() => {
-    if (phase !== "playing" || isBust || !canRoll) return;
-    
-    // If it's the ghost's turn and we haven't already started their roll sequence:
-    if (currentRoller?.isGhost && !isAutoRollingRef.current) {
-      isAutoRollingRef.current = true;
-      
-      const tId = setTimeout(() => {
-        playRollSound();
-        triggerHaptic("medium");
-        
-        setTimeout(() => {
-          // The moment before the store updates, we clear the flag so the NEXT turn can evaluate cleanly.
-          isAutoRollingRef.current = false;
-          autoRollGhost();
-        }, 300);
-      }, 1000);
-
-      // If the turn changes (someone undos, or phase ends) before the ghost rolls, cancel the roll safely.
-      return () => {
-        clearTimeout(tId);
-        isAutoRollingRef.current = false;
-      };
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, isBust, canRoll, currentRoller, autoRollGhost]);
 
   // Keyboard shortcuts: Space/R = virtual roll, D = doubles, U = undo
   useEffect(() => {
@@ -164,98 +133,80 @@ export function RollControls() {
     return () => window.removeEventListener("keydown", handler);
   }, [rollVirtual, enterDoubles, phase, canRoll]);
 
+  const disabledProps = { disabled: !canRoll || isBust || isGhostTurn };
+  const neutralColor = "bg-white/10 text-white hover:bg-white/20 border border-white/10";
+
+  let sevenColor = "";
+  let sevenLabel = "";
+  if (isDanger) {
+    if (activeRoundEvent === "devils_mercy" && !devilsMercyUsed) {
+      sevenColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 border border-emerald-500/30";
+      sevenLabel = "+7";
+    } else if (activeRoundEvent === "resilient_bank" && !resilientBankUsed) {
+      sevenColor = "bg-orange-500/80 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-400 border border-orange-500/30";
+      sevenLabel = "÷2";
+    } else {
+      sevenColor = "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500";
+      sevenLabel = "BUST";
+    }
+  } else {
+    sevenColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500";
+    sevenLabel = activeRoundEvent === "heavenly_sevens" ? "+140" : "+70";
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 w-full max-w-md">
-      <div className="w-full">
-        {/* Sum buttons: always a 5×2 grid covering sums 2–11 */}
-        <div className="grid grid-cols-5 gap-2 px-2">
+      <div className="w-full px-2">
+        <div className="grid grid-cols-4 gap-2">
           {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((sum) => {
             const isSeven = sum === 7;
             const isGoldenDouble = activeRoundEvent === "golden_totals" && isDanger && (sum === 10 || sum === 11);
-
-            let buttonColor = "";
-            let buttonLabel = "";
-            
-            if (isSeven) {
-              if (isDanger) {
-                if (activeRoundEvent === "devils_mercy" && !devilsMercyUsed) {
-                  buttonColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 border border-emerald-500/30";
-                  buttonLabel = "+7 (Mercy)";
-                } else if (activeRoundEvent === "resilient_bank" && !resilientBankUsed) {
-                  buttonColor = "bg-orange-500/80 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-400 border border-orange-500/30";
-                  buttonLabel = "÷2 BANK";
-                } else {
-                  buttonColor = "bg-red-600/80 text-white shadow-lg shadow-red-600/20 hover:bg-red-500";
-                  buttonLabel = "BUST";
-                }
-              } else {
-                buttonColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500";
-                buttonLabel = activeRoundEvent === "heavenly_sevens" ? "+140" : "+70";
-              }
-            } else if (isGoldenDouble) {
-              buttonColor = "bg-violet-600/80 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 border border-violet-500/30";
-              buttonLabel = "2x";
-            } else {
-              buttonColor = isDanger
-                ? "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-500/25 border border-amber-300 dark:border-amber-500/20"
-                : "bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10";
-            }
+            const color = isSeven
+              ? sevenColor
+              : isGoldenDouble
+              ? "bg-violet-600/80 text-white shadow-lg shadow-violet-600/20 hover:bg-violet-500 border border-violet-500/30"
+              : neutralColor;
 
             return (
               <motion.button
                 key={sum}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => enterSum(sum)}
-                disabled={!canRoll || isBust || isGhostTurn}
-                className={`relative flex flex-col items-center justify-center rounded-xl py-3 text-lg font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${buttonColor}`}
+                {...disabledProps}
+                className={`relative flex flex-col items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${color}`}
               >
-                <span>{sum}</span>
-                {(isSeven || isGoldenDouble) && (
-                  <span className="text-[10px] font-medium opacity-80 leading-tight">
-                    {buttonLabel}
-                  </span>
+                <span>{isSeven ? sevenLabel : sum}</span>
+                {isGoldenDouble && (
+                  <span className="text-xs font-medium opacity-80 leading-tight">2x</span>
                 )}
               </motion.button>
             );
           })}
+
+          {/* 12 — valid in safe zone, dimmed in danger zone (would be doubles) */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => !isDanger && enterSum(12)}
+            disabled={!canRoll || isBust || isGhostTurn || isDanger}
+            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${neutralColor}`}
+          >
+            12
+          </motion.button>
+
+          {/* Doubles — valid in danger zone, dimmed in safe zone */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => isDanger && enterDoubles()}
+            disabled={!canRoll || isBust || isGhostTurn || !isDanger}
+            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${
+              isDanger
+                ? "bg-violet-600/80 text-white hover:bg-violet-500 border border-violet-500/30 shadow-lg shadow-violet-600/20"
+                : neutralColor
+            }`}
+          >
+            {isDanger ? (activeRoundEvent === "triple_threat" ? "3x" : "2x") : "2×"}
+          </motion.button>
         </div>
-
-        {/* Full-width bottom button: 12 in safe zone, Doubles in danger zone */}
-        {!isDanger ? (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => enterSum(12)}
-            disabled={!canRoll || isBust || isGhostTurn}
-            className="
-              mt-2 mx-2 w-[calc(100%-1rem)]
-              flex items-center justify-center gap-2
-              rounded-xl py-3 text-lg font-bold transition-all duration-150
-              cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-              bg-black/10 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/20 border border-black/10 dark:border-white/10
-            "
-          >
-            <span>12</span>
-          </motion.button>
-        ) : (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={enterDoubles}
-            disabled={!canRoll || isBust || isGhostTurn}
-            className="
-              mt-2 mx-2 w-[calc(100%-1rem)]
-              flex items-center justify-center gap-2
-              rounded-xl py-3 text-sm font-semibold transition-all duration-150
-              cursor-pointer disabled:opacity-30 disabled:pointer-events-none
-              bg-violet-600/80 text-white hover:bg-violet-500 border border-violet-500/30 shadow-lg shadow-violet-600/20
-            "
-          >
-            <Zap className="w-4 h-4" />
-            <span>Doubles</span>
-            <span className="text-[10px] opacity-80">{activeRoundEvent === "triple_threat" ? "3x" : "2x"}</span>
-          </motion.button>
-        )}
-
-
       </div>
     </div>
   );

@@ -41,6 +41,9 @@ export interface RoundSummaryEntry {
 
 // --- Constants ---
 
+/** Distinct colors for ghost players so multiple ghosts are visually different. */
+const GHOST_COLORS = ["#8b5cf6", "#ec4899", "#14b8a6", "#f97316"];
+
 /** Palette assigned to players in order of creation. */
 const PLAYER_COLORS = [
   "#6366f1", "#f59e0b", "#10b981", "#ef4444",
@@ -86,6 +89,7 @@ export interface GameState {
   addPlayer: (name: string) => void;
   removePlayer: (id: string) => void;
   reorderPlayers: (fromIndex: number, toIndex: number) => void;
+  recolorPlayer: (id: string, color: string) => void;
   setTotalRounds: (rounds: number) => void;
   renamePlayer: (id: string, name: string) => void;
   startGame: () => void;
@@ -156,8 +160,15 @@ function makeDefaultPlayer(name: string, colorIndex: number): Player {
  */
 export function getTurnOrder(players: Player[], activeRoundEvent: string | null, currentRound: number, ghostsActiveUntilRound: number): Player[] {
   if (activeRoundEvent !== "ghost_overdrive") return players;
-  const activeGhosts = players.filter(p => p.isGhost && currentRound <= ghostsActiveUntilRound);
-  return [...players, ...activeGhosts];
+  // Insert each active ghost twice consecutively so both rolls happen back-to-back
+  const result: Player[] = [];
+  for (const p of players) {
+    result.push(p);
+    if (p.isGhost && currentRound <= ghostsActiveUntilRound) {
+      result.push(p);
+    }
+  }
+  return result;
 }
 
 /**
@@ -255,7 +266,7 @@ export const useGameStore = create<GameState>()(
         });
       },
 
-      setTotalRounds: (rounds: number) => set({ totalRounds: rounds }),
+      setTotalRounds: (rounds: number) => set({ totalRounds: rounds, ghostsActiveUntilRound: rounds }),
       setGhostsActiveUntilRound: (rounds: number) => set({ ghostsActiveUntilRound: rounds }),
       setRoundEventsEnabled: (enabled: boolean) => set({ roundEventsEnabled: enabled }),
       setActiveRoundEvent: (event: string | null) => set({ activeRoundEvent: event }),
@@ -277,7 +288,7 @@ export const useGameStore = create<GameState>()(
               newPlayers.push({
                 id: ghostId,
                 name: `Ghost (${currentGhosts.length + i + 1})`, // Updated naming convention
-                color: "#8b5cf6", // Violet color for ghosts
+                color: GHOST_COLORS[(currentGhosts.length + i) % GHOST_COLORS.length],
                 score: 0,
                 isGhost: true,
               });
@@ -294,6 +305,12 @@ export const useGameStore = create<GameState>()(
           }
           return { players: newPlayers };
         });
+      },
+
+      recolorPlayer: (id: string, color: string) => {
+        set((state) => ({
+          players: state.players.map((p) => p.id === id ? { ...p, color } : p),
+        }));
       },
 
       renamePlayer: (id: string, name: string) => {
@@ -381,6 +398,7 @@ export const useGameStore = create<GameState>()(
         const isEffectiveDouble = isDouble ||
           (state.activeRoundEvent === "golden_totals" && rc >= safeZoneLimit && (sum === 10 || sum === 11 || sum === 12));
         // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 doesn't bust this round)
+        // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 doesn't bust unless it's the bomb roll)
         const isTimeBomb = state.activeRoundEvent === "time_bomb" &&
           state.timeBombRoll !== null && sum === state.timeBombRoll;
         let bankAfter = state.bank;

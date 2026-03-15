@@ -22,14 +22,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           {
             "bg-white text-gray-900 shadow-md hover:bg-gray-100":
               variant === "default",
-            "bg-red-600 text-gray-900 dark:text-white hover:bg-red-700":
+            "bg-red-600 text-white hover:bg-red-700":
               variant === "destructive",
-            "border-2 border-black/10 dark:border-white/30 bg-transparent text-gray-900 dark:text-white hover:bg-black/5 dark:hover:bg-white/10":
+            "border-2 border-white/30 bg-transparent text-white hover:bg-white/10":
               variant === "outline",
-            "bg-black/10 dark:bg-white/20 text-gray-900 dark:text-white hover:bg-black/20 dark:hover:bg-white/30":
+            "bg-white/20 text-white hover:bg-white/30":
               variant === "secondary",
-            "text-gray-900 dark:text-white hover:bg-black/10 dark:hover:bg-white/10": variant === "ghost",
-            "text-gray-900 dark:text-white underline-offset-4 hover:underline":
+            "text-white hover:bg-white/10": variant === "ghost",
+            "text-white underline-offset-4 hover:underline":
               variant === "link",
           },
           {

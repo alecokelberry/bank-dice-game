@@ -38,12 +38,12 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-gray-900 border border-black/10 dark:border-white/10 p-6 shadow-2xl"
+              className="relative w-full max-w-lg rounded-2xl bg-gray-900 border border-white/10 p-6 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute right-4 top-4 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:text-white transition-colors cursor-pointer"
+                className="absolute right-4 top-4 text-gray-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -64,7 +64,7 @@ export function DialogTitle({
   className?: string;
 }) {
   return (
-    <h2 className={cn("text-xl font-bold text-gray-900 dark:text-white mb-4", className)}>
+    <h2 className={cn("text-xl font-bold text-white mb-4", className)}>
       {children}
     </h2>
   );

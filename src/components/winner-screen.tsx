@@ -5,7 +5,13 @@ import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useGameStore } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
-import { Trophy, RotateCcw, Crown } from "lucide-react";
+import { Trophy, RotateCcw } from "lucide-react";
+
+function ordinal(n: number) {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
 import { playWinSound } from "@/lib/sounds";
 
 export function WinnerScreen() {
@@ -38,7 +44,7 @@ export function WinnerScreen() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-40 flex flex-col items-center justify-start bg-white/95 dark:bg-gray-950/95 backdrop-blur-md p-6 overflow-y-auto"
+      className="fixed inset-0 z-40 flex flex-col items-center justify-start bg-gray-950/95 backdrop-blur-md p-6 overflow-y-auto"
     >
       <div className="flex flex-col items-center max-w-sm w-full pt-8">
         {/* Trophy icon */}
@@ -56,13 +62,13 @@ export function WinnerScreen() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-2 text-center"
+          className="text-3xl md:text-5xl font-black text-white mb-2 text-center"
         >
           {isTie ? (
             <>
               {winners.map((w, i) => (
                 <span key={w.id}>
-                  {i > 0 && <span className="text-gray-500 dark:text-gray-500"> & </span>}
+                  {i > 0 && <span className="text-gray-500"> & </span>}
                   {w.name}
                 </span>
               ))}
@@ -90,30 +96,30 @@ export function WinnerScreen() {
           className="w-full space-y-2 mb-6"
         >
           {sortedPlayers.map((player, idx) => {
+            const rank = idx === 0 ? 1 : sortedPlayers[idx - 1].score === player.score
+              ? sortedPlayers.findIndex((p) => p.score === player.score) + 1
+              : idx + 1;
             const isWinner = winners.some((w) => w.id === player.id);
             return (
               <div
                 key={player.id}
                 className={`flex items-center justify-between rounded-xl px-4 py-2.5 ${
                   isWinner
-                    ? "bg-amber-50 dark:bg-amber-400/20 border border-amber-200 dark:border-amber-400/30"
-                    : "bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10"
+                    ? "bg-amber-400/10 border border-amber-400/20"
+                    : "bg-white/5 border border-white/10"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`text-base font-bold ${isWinner ? "text-amber-400" : "text-gray-500 dark:text-gray-500"}`}>
-                    {isWinner ? <Crown className="w-4 h-4 inline" /> : `#${idx + 1}`}
-                  </span>
                   <div
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
                     style={{ backgroundColor: player.color }}
                   >
-                    {player.name.slice(0, 2).toUpperCase()}
+                    {ordinal(rank)}
                   </div>
-                  <span className="text-gray-900 dark:text-white font-semibold text-sm">{player.name}</span>
+                  <span className="text-white font-semibold">{player.name}</span>
                 </div>
-                <span className="text-gray-700 dark:text-gray-300 tabular-nums font-mono text-sm">
-                  {player.score}
+                <span className="text-white tabular-nums font-bold">
+                  {player.score.toLocaleString()}
                 </span>
               </div>
             );
