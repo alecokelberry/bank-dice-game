@@ -131,8 +131,9 @@ export const ROUND_EVENTS: Array<{ id: string; name: string; description: string
 ];
 
 /** Picks a random round event when round events are enabled. Returns the event id and the time bomb roll (if applicable). */
-function pickRandomEvent(): { id: string; timeBombRoll: number | null } {
-  const event = ROUND_EVENTS[Math.floor(Math.random() * ROUND_EVENTS.length)];
+function pickRandomEvent(hasActiveGhosts: boolean): { id: string; timeBombRoll: number | null } {
+  const pool = hasActiveGhosts ? ROUND_EVENTS : ROUND_EVENTS.filter(e => e.id !== "ghost_overdrive");
+  const event = pool[Math.floor(Math.random() * pool.length)];
   return {
     id: event.id,
     timeBombRoll: event.id === "time_bomb" ? Math.floor(Math.random() * 7) + 4 : null,
@@ -325,7 +326,7 @@ export const useGameStore = create<GameState>()(
           isBust: false,
           lastDie1: null,
           lastDie2: null,
-          ...(() => { const ev = state.roundEventsEnabled ? pickRandomEvent() : null; return { activeRoundEvent: ev?.id ?? null, timeBombRoll: ev?.timeBombRoll ?? null }; })(),
+          ...(() => { const ev = state.roundEventsEnabled ? pickRandomEvent(basePlayers.some(p => p.isGhost && 1 <= state.ghostsActiveUntilRound)) : null; return { activeRoundEvent: ev?.id ?? null, timeBombRoll: ev?.timeBombRoll ?? null }; })(),
           undoSnapshot: null,
           undoLabel: null,
           gameLog: [],
@@ -542,7 +543,7 @@ export const useGameStore = create<GameState>()(
             undoLabel: `${player.name} banked ${amount}`,
             roundSummary: summary,
             roundSummaryRound: state.currentRound,
-            ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
+            ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(playersForNextRound.some(p => p.isGhost && nextRound <= state.ghostsActiveUntilRound)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
             gameLog: [
               isGameOver ? "Game Over!" : `── Round ${nextRound} ──`,
               logMsg,
@@ -622,7 +623,7 @@ export const useGameStore = create<GameState>()(
             isGameOver ? "Game Over!" : `── Round ${nextRound} ──`,
             ...state.gameLog,
           ].slice(0, 50),
-          ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
+          ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(updatedPlayers.some(p => p.isGhost && nextRound <= state.ghostsActiveUntilRound)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
         });
       },
 
