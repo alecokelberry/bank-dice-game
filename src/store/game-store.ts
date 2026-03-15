@@ -119,15 +119,15 @@ function generateId(): string {
 
 /** All available round events, keyed by id. */
 export const ROUND_EVENTS: Array<{ id: string; name: string; description: string }> = [
-  { id: "triple_threat", name: "Triple Threat", description: "Doubles multiply the bank by 3× instead of 2× this round." },
-  { id: "extended_safety", name: "Extended Safety", description: "The safe zone lasts for 5 rolls instead of 3. Push your luck!" },
-  { id: "ghost_overdrive", name: "Ghost Overdrive", description: "Every ghost rolls twice this round (two separate turns). They become absolute monsters." },
-  { id: "heavenly_sevens", name: "Heavenly Sevens", description: "Safe-zone 7s give +140 to the bank instead of +70." },
-  { id: "devils_mercy", name: "Devil's Mercy", description: "The first 7 of the danger zone does not bust — it just adds 7 and continues." },
-  { id: "short_fuse", name: "Short Fuse", description: "The safe zone only lasts 1 roll this round. Danger hits early!" },
-  { id: "golden_totals", name: "Golden Totals", description: "Any roll totaling 10, 11, or 12 counts as doubles this round." },
-  { id: "resilient_bank", name: "Resilient Bank", description: "The first 7 in the danger zone only halves the bank instead of busting." },
-  { id: "time_bomb", name: "Time Bomb", description: "A hidden roll somewhere between 4 and 10 is rigged to bust. Nobody knows when it drops." },
+  { id: "triple_threat", name: "Triple Threat", description: "Hit doubles and the bank triples instead of doubling." },
+  { id: "extended_safety", name: "Extended Safety", description: "Safe zone runs for 5 rolls this round instead of 3." },
+  { id: "ghost_overdrive", name: "Ghost Overdrive", description: "Every ghost rolls twice per turn this round." },
+  { id: "heavenly_sevens", name: "Heavenly Sevens", description: "7s in the safe zone are worth +140 instead of +70." },
+  { id: "devils_mercy", name: "Devil's Mercy", description: "The first 7 in the danger zone won't bust — it just adds 7 and play continues." },
+  { id: "short_fuse", name: "Short Fuse", description: "Safe zone is only 1 roll this round. Danger comes fast." },
+  { id: "golden_totals", name: "Golden Totals", description: "Any roll totaling 10, 11, or 12 counts as doubles." },
+  { id: "resilient_bank", name: "Resilient Bank", description: "The first danger-zone 7 halves the bank instead of busting it." },
+  { id: "time_bomb", name: "Time Bomb", description: "7 won't bust this round — but one number between 2 and 12 is secretly rigged to. Roll it in the danger zone and it's over." },
 ];
 
 /** Picks a random round event when round events are enabled. Returns the event id and the time bomb roll (if applicable). */
@@ -136,7 +136,7 @@ function pickRandomEvent(hasActiveGhosts: boolean): { id: string; timeBombRoll: 
   const event = pool[Math.floor(Math.random() * pool.length)];
   return {
     id: event.id,
-    timeBombRoll: event.id === "time_bomb" ? Math.floor(Math.random() * 7) + 4 : null,
+    timeBombRoll: event.id === "time_bomb" ? Math.floor(Math.random() * 11) + 2 : null,
   };
 }
 
@@ -384,9 +384,9 @@ export const useGameStore = create<GameState>()(
         // Golden Totals: 10/11/12 in danger zone count as doubles
         const isEffectiveDouble = isDouble ||
           (state.activeRoundEvent === "golden_totals" && rc >= safeZoneLimit && (sum === 10 || sum === 11 || sum === 12));
-        // Time Bomb: a hidden roll number that forces a bust
+        // Time Bomb: a hidden die sum that forces a bust in the danger zone (7 doesn't bust this round)
         const isTimeBomb = state.activeRoundEvent === "time_bomb" &&
-          state.timeBombRoll !== null && rc + 1 === state.timeBombRoll;
+          state.timeBombRoll !== null && sum === state.timeBombRoll;
         let bankAfter = state.bank;
         let wasBust = false;
 
@@ -402,7 +402,10 @@ export const useGameStore = create<GameState>()(
             const multiplier = state.activeRoundEvent === "triple_threat" ? 3 : 2;
             bankAfter = state.bank * multiplier;
           } else if (sum === 7) {
-            if (state.activeRoundEvent === "resilient_bank" && !state.resilientBankUsed) {
+            if (state.activeRoundEvent === "time_bomb") {
+              // Time Bomb: 7 is safe this round, just adds 7
+              bankAfter = state.bank + 7;
+            } else if (state.activeRoundEvent === "resilient_bank" && !state.resilientBankUsed) {
               // Resilient Bank: first danger-zone 7 only halves the bank
               bankAfter = Math.floor(state.bank / 2);
             } else if (state.activeRoundEvent === "devils_mercy" && !state.devilsMercyUsed) {
@@ -422,6 +425,8 @@ export const useGameStore = create<GameState>()(
           logMsg += " → 💣 TIME BOMB! BUST!";
         } else if (wasBust) {
           logMsg += " → BUST!";
+        } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "time_bomb") {
+          logMsg += ` → 7 (safe this round) +7 (Bank: ${bankAfter})`;
         } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "resilient_bank" && !state.resilientBankUsed) {
           logMsg += ` → RESILIENT BANK! Halved to ${bankAfter}`;
         } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "devils_mercy") {

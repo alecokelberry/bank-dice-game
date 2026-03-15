@@ -228,7 +228,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Zap className="w-4 h-4 text-amber-500" /> Triple Threat
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Doubles multiply the bank by 3× instead of 2× this round. Pure mayhem.
+              Hit doubles and the bank triples instead of doubling.
             </p>
           </div>
 
@@ -237,7 +237,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Shield className="w-4 h-4 text-emerald-500" /> Extended Safety
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              The safe zone lasts for 5 rolls instead of 3. Push your luck!
+              Safe zone runs for 5 rolls this round instead of 3.
             </p>
           </div>
 
@@ -246,7 +246,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Ghost className="w-4 h-4 text-violet-500" /> Ghost Overdrive
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Every ghost rolls twice this round (two separate turns). They become absolute monsters.
+              Every ghost rolls twice per turn this round.
             </p>
           </div>
 
@@ -255,7 +255,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Cloud className="w-4 h-4 text-sky-500" /> Heavenly Sevens
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Safe-zone 7s give +140 to the bank instead of +70.
+              7s in the safe zone are worth +140 instead of +70.
             </p>
           </div>
 
@@ -264,7 +264,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Flame className="w-4 h-4 text-red-500" /> Devil&apos;s Mercy
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              The first 7 of the danger zone does not bust — it just adds 7 and continues.
+              The first 7 in the danger zone won&apos;t bust — it just adds 7 and play continues.
             </p>
           </div>
 
@@ -273,7 +273,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Timer className="w-4 h-4 text-orange-500" /> Short Fuse
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              The safe zone only lasts 1 roll this round. Danger hits on roll 2.
+              Safe zone is only 1 roll this round. Danger comes fast.
             </p>
           </div>
 
@@ -282,7 +282,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Star className="w-4 h-4 text-yellow-500" /> Golden Totals
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Any roll totaling 10, 11, or 12 counts as doubles this round. High rollers rejoice.
+              Any roll totaling 10, 11, or 12 counts as doubles.
             </p>
           </div>
 
@@ -291,7 +291,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Shield className="w-4 h-4 text-teal-500" /> Resilient Bank
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              The first 7 in the danger zone only halves the bank instead of wiping it out. A fighting chance.
+              The first danger-zone 7 halves the bank instead of busting it.
             </p>
           </div>
 
@@ -300,7 +300,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               <Bomb className="w-4 h-4 text-rose-500" /> Time Bomb
             </h3>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              A hidden roll between 4 and 10 is rigged to bust. No warning, no mercy. Nobody knows when it drops.
+              7 won&apos;t bust this round — but one number between 2 and 12 is secretly rigged to. Roll it in the danger zone and it&apos;s over.
             </p>
           </div>
         </div>
@@ -315,7 +315,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
         </DialogTitle>
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Automated AI players that constantly push their luck. They take their turns automatically, trying to hit doubles or 7s, serving as a pace-setter or a chaotic wild card in your games.
+            Players that roll automatically — always 7s in the safe zone and doubles in the danger zone. Good for filling out a group or keeping the bank from sitting still.
           </p>
         </div>
       </Dialog>
