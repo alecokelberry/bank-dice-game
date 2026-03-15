@@ -133,6 +133,7 @@ The app builds as a fully static export — no server needed.
 ## Getting Started
 
 ```bash
+cd ~/developer/bank-dice-game
 npm install
 npm run dev     # http://localhost:3000
 npm run build   # Static export to /out
