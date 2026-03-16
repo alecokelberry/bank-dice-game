@@ -141,7 +141,7 @@ export function PlayerList({ mode = "bank" }: { mode?: "leaderboard" | "bank" })
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-white truncate">{player.isGhost ? "Ghost" : player.name}</div>
+                  <div className="text-lg font-semibold text-white truncate">{player.isGhost ? "Ghost" : player.name}</div>
                 </div>
                 {hasBanked && (
                   <Check className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -190,7 +190,7 @@ export function PlayerList({ mode = "bank" }: { mode?: "leaderboard" | "bank" })
 
               {/* Player name */}
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-white truncate flex items-center gap-1.5">
+                <div className="text-lg font-semibold text-white truncate flex items-center gap-1.5">
                   {player.isGhost ? "Ghost" : player.name}
                 </div>
               </div>
