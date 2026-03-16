@@ -172,6 +172,17 @@ export function getTurnOrder(players: Player[], activeRoundEvent: string | null,
 }
 
 /**
+ * Computes the starting roller index for a new round, continuing from
+ * where the previous round left off (the player after the last roller).
+ */
+function computeNextRoundStartIndex(lastRollerPlayerId: string | null, players: Player[]): number {
+  if (!lastRollerPlayerId || players.length === 0) return 0;
+  const idx = players.findIndex(p => p.id === lastRollerPlayerId);
+  if (idx === -1) return 0;
+  return (idx + 1) % players.length;
+}
+
+/**
  * Advances the roller index to the next unbanked player.
  * Wraps around the player array, skipping anyone who has already banked
  * or ghosts that are inactive this round.
@@ -546,7 +557,7 @@ export const useGameStore = create<GameState>()(
             phase: isGameOver ? "finished" : "round_summary",
             lastDie1: null,
             lastDie2: null,
-            currentRollerIndex: 0,
+            currentRollerIndex: computeNextRoundStartIndex(playerId, playersForNextRound),
             undoSnapshot: snapshot,
             undoLabel: `${player.name} banked ${amount}`,
             roundSummary: summary,
@@ -605,6 +616,9 @@ export const useGameStore = create<GameState>()(
 
         const updatedPlayers = state.players;
 
+        const bustTurnOrder = getTurnOrder(state.players, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
+        const lastRoller = bustTurnOrder[state.currentRollerIndex % bustTurnOrder.length];
+
         set({
           players: updatedPlayers,
           bank: 0,
@@ -613,7 +627,7 @@ export const useGameStore = create<GameState>()(
           isBust: false,
           lastDie1: null,
           lastDie2: null,
-          currentRollerIndex: 0,
+          currentRollerIndex: computeNextRoundStartIndex(lastRoller?.id ?? null, updatedPlayers),
           undoSnapshot: null,
           undoLabel: null,
           devilsMercyUsed: false,
