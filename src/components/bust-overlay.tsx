@@ -45,9 +45,6 @@ export function BustOverlay() {
           >
             BUST!
           </div>
-          <p className="text-red-300 text-base mb-6">
-            A 7 was rolled in the danger zone!
-          </p>
         </motion.div>
 
         <motion.div

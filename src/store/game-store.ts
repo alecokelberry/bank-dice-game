@@ -25,10 +25,12 @@ export interface StateSnapshot {
   lastDie1: number | null;
   lastDie2: number | null;
   currentRollerIndex: number;
+  lastRollerId: string | null;
   gameLog: string[];
   devilsMercyUsed: boolean;
   resilientBankUsed: boolean;
   timeBombRoll: number | null;
+  ghostRollCountsThisRound: Record<string, number>;
 }
 
 /** Entry shown in the between-round summary overlay. */
@@ -67,7 +69,10 @@ export interface GameState {
   lastDie1: number | null;
   lastDie2: number | null;
   currentRollerIndex: number;
-  ghostsActiveUntilRound: number;
+  /** ID of the player who rolled the dice most recently this round. Used to correctly start the next round from the player after them. */
+  lastRollerId: string | null;
+  ghostRollsPerRound: number | null;
+  ghostRollCountsThisRound: Record<string, number>;
   roundEventsEnabled: boolean;
   activeRoundEvent: string | null;
 
@@ -95,7 +100,7 @@ export interface GameState {
   startGame: () => void;
   resetGame: () => void;
   setGhostCount: (count: number) => void;
-  setGhostsActiveUntilRound: (rounds: number) => void;
+  setGhostRollsPerRound: (rolls: number | null) => void;
   setRoundEventsEnabled: (enabled: boolean) => void;
   setActiveRoundEvent: (event: string | null) => void;
 
@@ -129,7 +134,7 @@ export const ROUND_EVENTS: Array<{ id: string; name: string; description: string
   { id: "devils_mercy", name: "Devil's Mercy", description: "The first 7 in the danger zone won't bust — it just adds 7 and play continues." },
   { id: "short_fuse", name: "Short Fuse", description: "Safe zone is only 1 roll this round. Danger comes fast." },
   { id: "golden_totals", name: "Golden Totals", description: "Any roll totaling 10, 11, or 12 counts as doubles." },
-  { id: "resilient_bank", name: "Resilient Bank", description: "The first danger-zone 7 halves the bank instead of busting it." },
+  { id: "resilient_bank", name: "Brazilian Bank", description: "The first danger-zone 7 halves the bank instead of busting it." },
   { id: "time_bomb", name: "Time Bomb", description: "7 won't bust this round — but one number between 2 and 12 is secretly rigged to. Roll it in the danger zone and it's over." },
 ];
 
@@ -158,15 +163,13 @@ function makeDefaultPlayer(name: string, colorIndex: number): Player {
  * Returns the effective rotation of players for the round. 
  * If Ghost Overdrive is active, ghosts get appended to the end of the rotation a second time.
  */
-export function getTurnOrder(players: Player[], activeRoundEvent: string | null, currentRound: number, ghostsActiveUntilRound: number): Player[] {
+export function getTurnOrder(players: Player[], activeRoundEvent: string | null): Player[] {
   if (activeRoundEvent !== "ghost_overdrive") return players;
-  // Insert each active ghost twice consecutively so both rolls happen back-to-back
+  // Insert each ghost twice consecutively so both rolls happen back-to-back
   const result: Player[] = [];
   for (const p of players) {
     result.push(p);
-    if (p.isGhost && currentRound <= ghostsActiveUntilRound) {
-      result.push(p);
-    }
+    if (p.isGhost) result.push(p);
   }
   return result;
 }
@@ -184,22 +187,18 @@ function computeNextRoundStartIndex(lastRollerPlayerId: string | null, players: 
 
 /**
  * Advances the roller index to the next unbanked player.
- * Wraps around the player array, skipping anyone who has already banked
- * or ghosts that are inactive this round.
+ * Wraps around the player array, skipping anyone who has already banked.
  */
 function advanceRollerIndex(
   current: number,
   turnOrder: Player[],
-  bankedThisRound: string[],
-  currentRound: number,
-  ghostsActiveUntilRound: number
+  bankedThisRound: string[]
 ): number {
   if (turnOrder.length === 0) return 0;
   let next = (current + 1) % turnOrder.length;
   for (let i = 0; i < turnOrder.length; i++) {
     const p = turnOrder[next];
-    const isGhostInactive = p.isGhost && currentRound > ghostsActiveUntilRound;
-    if (!bankedThisRound.includes(p.id) && !isGhostInactive) return next;
+    if (!bankedThisRound.includes(p.id)) return next;
     next = (next + 1) % turnOrder.length;
   }
   return next;
@@ -218,10 +217,12 @@ function takeSnapshot(state: GameState): StateSnapshot {
     lastDie1: state.lastDie1,
     lastDie2: state.lastDie2,
     currentRollerIndex: state.currentRollerIndex,
+    lastRollerId: state.lastRollerId,
     gameLog: [...state.gameLog],
     devilsMercyUsed: state.devilsMercyUsed,
     resilientBankUsed: state.resilientBankUsed,
     timeBombRoll: state.timeBombRoll,
+    ghostRollCountsThisRound: { ...state.ghostRollCountsThisRound },
   };
 }
 
@@ -241,7 +242,9 @@ export const useGameStore = create<GameState>()(
       lastDie1: null,
       lastDie2: null,
       currentRollerIndex: 0,
-      ghostsActiveUntilRound: 10,
+      lastRollerId: null,
+      ghostRollsPerRound: null,
+      ghostRollCountsThisRound: {},
       roundEventsEnabled: false,
       activeRoundEvent: null,
 
@@ -277,8 +280,8 @@ export const useGameStore = create<GameState>()(
         });
       },
 
-      setTotalRounds: (rounds: number) => set({ totalRounds: rounds, ghostsActiveUntilRound: rounds }),
-      setGhostsActiveUntilRound: (rounds: number) => set({ ghostsActiveUntilRound: rounds }),
+      setTotalRounds: (rounds: number) => set({ totalRounds: rounds }),
+      setGhostRollsPerRound: (rolls: number | null) => set({ ghostRollsPerRound: rolls }),
       setRoundEventsEnabled: (enabled: boolean) => set({ roundEventsEnabled: enabled }),
       setActiveRoundEvent: (event: string | null) => set({ activeRoundEvent: event }),
 
@@ -350,7 +353,7 @@ export const useGameStore = create<GameState>()(
           isBust: false,
           lastDie1: null,
           lastDie2: null,
-          ...(() => { const ev = state.roundEventsEnabled ? pickRandomEvent(basePlayers.some(p => p.isGhost && 1 <= state.ghostsActiveUntilRound)) : null; return { activeRoundEvent: ev?.id ?? null, timeBombRoll: ev?.timeBombRoll ?? null }; })(),
+          ...(() => { const ev = state.roundEventsEnabled ? pickRandomEvent(basePlayers.some(p => p.isGhost)) : null; return { activeRoundEvent: ev?.id ?? null, timeBombRoll: ev?.timeBombRoll ?? null }; })(),
           undoSnapshot: null,
           undoLabel: null,
           gameLog: [],
@@ -358,11 +361,10 @@ export const useGameStore = create<GameState>()(
           roundSummaryRound: 0,
           devilsMercyUsed: false,
           resilientBankUsed: false,
+          ghostRollCountsThisRound: {},
           players: basePlayers,
-          currentRollerIndex: Math.max(
-            0,
-            basePlayers.findIndex(p => !p.isGhost || state.currentRound <= state.ghostsActiveUntilRound)
-          ),
+          currentRollerIndex: 0,
+          lastRollerId: null,
         });
       },
 
@@ -398,8 +400,9 @@ export const useGameStore = create<GameState>()(
         const rc = state.rollCount;
         const safeZoneLimit = getSafeZoneRolls(state);
 
-        const turnOrder = getTurnOrder(state.players, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
-        const currentRollerId = turnOrder[state.currentRollerIndex % turnOrder.length]?.id ?? null;
+        const turnOrder = getTurnOrder(state.players, state.activeRoundEvent);
+        const currentRoller = turnOrder[state.currentRollerIndex % turnOrder.length] ?? null;
+        const currentRollerId = currentRoller?.id ?? null;
 
         let d1 = die1, d2 = die2;
         
@@ -452,7 +455,7 @@ export const useGameStore = create<GameState>()(
         } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "time_bomb") {
           logMsg += ` → 7 (safe this round) +7 (Bank: ${bankAfter})`;
         } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "resilient_bank" && !state.resilientBankUsed) {
-          logMsg += ` → RESILIENT BANK! Halved to ${bankAfter}`;
+          logMsg += ` → BRAZILIAN BANK! Halved to ${bankAfter}`;
         } else if (sum === 7 && rc >= safeZoneLimit && state.activeRoundEvent === "devils_mercy") {
           logMsg += ` → DEVIL'S MERCY! +7 (Bank: ${bankAfter})`;
         } else if (isEffectiveDouble && rc >= safeZoneLimit) {
@@ -468,22 +471,41 @@ export const useGameStore = create<GameState>()(
           logMsg += ` → Bank: ${bankAfter}`;
         }
 
+        // Ghost auto-bank: if the current roller is a ghost and just hit their roll limit, bank them inline.
+        // Ghost Overdrive inserts each ghost twice consecutively — only count the first of the two rolls.
+        const prevSlot = turnOrder[(state.currentRollerIndex - 1 + turnOrder.length) % turnOrder.length];
+        const isOverdriveSecondRoll = state.activeRoundEvent === "ghost_overdrive" && prevSlot?.id === currentRoller?.id;
+        let newGhostRollCounts = { ...state.ghostRollCountsThisRound };
+        let newBankedThisRound = state.bankedThisRound;
+        let updatedPlayers = state.players;
+        if (currentRoller?.isGhost && !wasBust && !isOverdriveSecondRoll) {
+          newGhostRollCounts[currentRoller.id] = (newGhostRollCounts[currentRoller.id] ?? 0) + 1;
+          if (state.ghostRollsPerRound !== null && newGhostRollCounts[currentRoller.id] >= state.ghostRollsPerRound) {
+            newBankedThisRound = [...state.bankedThisRound, currentRoller.id];
+            updatedPlayers = state.players.map(p =>
+              p.id === currentRoller.id ? { ...p, score: p.score + bankAfter } : p
+            );
+            logMsg += ` — 👻 ${currentRoller.name} banks ${bankAfter}!`;
+          }
+        }
+
         const nextRollerIndex = advanceRollerIndex(
           state.currentRollerIndex,
           turnOrder,
-          state.bankedThisRound,
-          state.currentRound,
-          state.ghostsActiveUntilRound
+          newBankedThisRound
         );
 
         set({
-          players: state.players,
+          players: updatedPlayers,
           bank: bankAfter,
           rollCount: rc + 1,
           isBust: wasBust,
           lastDie1: d1,
           lastDie2: d2,
           currentRollerIndex: nextRollerIndex,
+          lastRollerId: currentRollerId,
+          bankedThisRound: newBankedThisRound,
+          ghostRollCountsThisRound: newGhostRollCounts,
           undoSnapshot: snapshot,
           undoLabel: `Roll #${rc + 1}: ${d1}+${d2}`,
           gameLog: [logMsg, ...state.gameLog].slice(0, 50),
@@ -520,8 +542,8 @@ export const useGameStore = create<GameState>()(
           .every((p) => newBanked.includes(p.id));
 
         if (allHumansBanked) {
-          // Force ghosts to bank too
-          const activeGhosts = updatedPlayers.filter((p) => p.isGhost && state.currentRound <= state.ghostsActiveUntilRound);
+          // Force any remaining ghosts to bank too
+          const activeGhosts = updatedPlayers.filter((p) => p.isGhost && !newBanked.includes(p.id));
           updatedPlayers = updatedPlayers.map((p) => {
             if (activeGhosts.some((g) => g.id === p.id)) {
                return { ...p, score: p.score + state.bank };
@@ -557,12 +579,14 @@ export const useGameStore = create<GameState>()(
             phase: isGameOver ? "finished" : "round_summary",
             lastDie1: null,
             lastDie2: null,
-            currentRollerIndex: computeNextRoundStartIndex(playerId, playersForNextRound),
+            currentRollerIndex: computeNextRoundStartIndex(state.lastRollerId, playersForNextRound),
+            lastRollerId: null,
             undoSnapshot: snapshot,
             undoLabel: `${player.name} banked ${amount}`,
             roundSummary: summary,
             roundSummaryRound: state.currentRound,
-            ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(playersForNextRound.some(p => p.isGhost && nextRound <= state.ghostsActiveUntilRound)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
+            ghostRollCountsThisRound: {},
+            ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(playersForNextRound.some(p => p.isGhost)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
             gameLog: [
               isGameOver ? "Game Over!" : `── Round ${nextRound} ──`,
               logMsg,
@@ -570,19 +594,16 @@ export const useGameStore = create<GameState>()(
             ].slice(0, 50),
           });
         } else {
-          // If the player banking is the current roller, or if they were the active one, 
-          // we need to advance the turn to the next unbanked active player.
-          const currentTurnOrder = getTurnOrder(updatedPlayers, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
+          // If the player banking is the current roller, advance turn to the next unbanked player.
+          const currentTurnOrder = getTurnOrder(updatedPlayers, state.activeRoundEvent);
           const activeRoller = currentTurnOrder[state.currentRollerIndex % currentTurnOrder.length];
           let nextRollerIndex = state.currentRollerIndex;
-          
+
           if (activeRoller && activeRoller.id === playerId) {
             nextRollerIndex = advanceRollerIndex(
               state.currentRollerIndex,
               currentTurnOrder,
-              newBanked,
-              state.currentRound,
-              state.ghostsActiveUntilRound
+              newBanked
             );
           }
 
@@ -605,19 +626,15 @@ export const useGameStore = create<GameState>()(
         // Build the round summary for the bust screen
         const summary: RoundSummaryEntry[] = state.players.map((p) => {
           const didBank = state.bankedThisRound.includes(p.id);
-          const wasActiveGhost = p.isGhost && state.currentRound <= state.ghostsActiveUntilRound;
           return {
             playerId: p.id,
             playerName: p.name,
-            banked: !!(didBank || wasActiveGhost), // For ghosts, mark as "banked" if they were active
-            amount: didBank ? state.bank : 0, // But they get 0
+            banked: !!(didBank || p.isGhost),
+            amount: didBank ? state.bank : 0,
           };
         });
 
         const updatedPlayers = state.players;
-
-        const bustTurnOrder = getTurnOrder(state.players, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
-        const lastRoller = bustTurnOrder[state.currentRollerIndex % bustTurnOrder.length];
 
         set({
           players: updatedPlayers,
@@ -627,11 +644,13 @@ export const useGameStore = create<GameState>()(
           isBust: false,
           lastDie1: null,
           lastDie2: null,
-          currentRollerIndex: computeNextRoundStartIndex(lastRoller?.id ?? null, updatedPlayers),
+          lastRollerId: null,
+          currentRollerIndex: computeNextRoundStartIndex(state.lastRollerId, updatedPlayers),
           undoSnapshot: null,
           undoLabel: null,
           devilsMercyUsed: false,
           resilientBankUsed: false,
+          ghostRollCountsThisRound: {},
           currentRound: isGameOver ? state.currentRound : nextRound,
           phase: isGameOver ? "finished" : "round_summary",
           roundSummary: summary,
@@ -640,7 +659,7 @@ export const useGameStore = create<GameState>()(
             isGameOver ? "Game Over!" : `── Round ${nextRound} ──`,
             ...state.gameLog,
           ].slice(0, 50),
-          ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(updatedPlayers.some(p => p.isGhost && nextRound <= state.ghostsActiveUntilRound)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
+          ...(() => { if (!state.roundEventsEnabled || isGameOver) return { activeRoundEvent: null, timeBombRoll: null }; const ev = pickRandomEvent(updatedPlayers.some(p => p.isGhost)); return { activeRoundEvent: ev.id, timeBombRoll: ev.timeBombRoll }; })(),
         });
       },
 
@@ -663,10 +682,12 @@ export const useGameStore = create<GameState>()(
           lastDie1: snapshot.lastDie1,
           lastDie2: snapshot.lastDie2,
           currentRollerIndex: snapshot.currentRollerIndex,
+          lastRollerId: snapshot.lastRollerId,
           gameLog: snapshot.gameLog,
           devilsMercyUsed: snapshot.devilsMercyUsed,
           resilientBankUsed: snapshot.resilientBankUsed,
           timeBombRoll: snapshot.timeBombRoll,
+          ghostRollCountsThisRound: snapshot.ghostRollCountsThisRound,
           undoSnapshot: null,
           undoLabel: null,
           roundSummary: null,
@@ -677,9 +698,9 @@ export const useGameStore = create<GameState>()(
         const state = get();
         if (state.phase !== "playing" || state.isBust) return;
 
-        const turnOrder = getTurnOrder(state.players, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
+        const turnOrder = getTurnOrder(state.players, state.activeRoundEvent);
         const roller = turnOrder[state.currentRollerIndex % turnOrder.length];
-        if (!roller?.isGhost || state.currentRound > state.ghostsActiveUntilRound) return;
+        if (!roller?.isGhost) return;
 
         let d1: number, d2: number;
         if (state.rollCount < getSafeZoneRolls(state)) {
@@ -711,7 +732,7 @@ export const useGameStore = create<GameState>()(
     }),
     {
       // Bumped from v2 to v3 to invalidate stale localStorage from older versions
-      name: "bank-dice-game-v4",
+      name: "bank-dice-game-v5",
       partialize: (state) => ({
         players: state.players,
         currentRound: state.currentRound,
@@ -729,7 +750,8 @@ export const useGameStore = create<GameState>()(
         gameLog: state.gameLog,
         roundSummary: state.roundSummary,
         roundSummaryRound: state.roundSummaryRound,
-        ghostsActiveUntilRound: state.ghostsActiveUntilRound,
+        ghostRollsPerRound: state.ghostRollsPerRound,
+        ghostRollCountsThisRound: state.ghostRollCountsThisRound,
         resilientBankUsed: state.resilientBankUsed,
         timeBombRoll: state.timeBombRoll,
         roundEventsEnabled: state.roundEventsEnabled,
@@ -756,6 +778,6 @@ export const selectCanBank = (state: GameState) =>
 
 export function selectCurrentRoller(state: GameState): Player | null {
   if (state.phase !== "playing" || state.players.length === 0) return null;
-  const turnOrder = getTurnOrder(state.players, state.activeRoundEvent, state.currentRound, state.ghostsActiveUntilRound);
+  const turnOrder = getTurnOrder(state.players, state.activeRoundEvent);
   return turnOrder[state.currentRollerIndex % turnOrder.length] ?? null;
 }

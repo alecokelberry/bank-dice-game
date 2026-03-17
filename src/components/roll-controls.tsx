@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   useGameStore, 
@@ -27,7 +27,6 @@ export function RollControls() {
   const devilsMercyUsed = useGameStore((s) => s.devilsMercyUsed);
   const resilientBankUsed = useGameStore((s) => s.resilientBankUsed);
 
-  const [isRolling, setIsRolling] = useState(false);
   const isGhostTurn = currentRoller?.isGhost ?? false;
   /**
    * Converts a non-doubles sum from physical dice into a (die1, die2) pair.
@@ -81,20 +80,6 @@ export function RollControls() {
     handleRoll(1, 1);
   }, [canRoll, handleRoll]);
 
-  // Virtual dice roll triggered by keyboard shortcut (Space / R)
-  const rollVirtual = useCallback(() => {
-    if (!canRoll || isRolling) return;
-    setIsRolling(true);
-    playRollSound();
-    triggerHaptic("medium");
-    setTimeout(() => {
-      const d1 = Math.floor(Math.random() * 6) + 1;
-      const d2 = Math.floor(Math.random() * 6) + 1;
-      handleRoll(d1, d2);
-      setIsRolling(false);
-    }, 500);
-  }, [canRoll, isRolling, handleRoll]);
-
   // Play special audio cues for doubles and lucky 7s (skip on initial mount)
   const mountedRef = useRef(false);
   useEffect(() => {
@@ -110,16 +95,12 @@ export function RollControls() {
     }
   }, [lastDie1, lastDie2, phase, rollCount, safeZoneRolls, activeRoundEvent, isDanger]);
 
-  // Keyboard shortcuts: Space/R = virtual roll, D = doubles, U = undo
+  // Keyboard shortcuts: D = doubles, U = undo
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (phase !== "playing" || !canRoll) return;
 
-      if ((e.key === " " || e.key === "r" || e.key === "R") && !e.metaKey && !e.ctrlKey) {
-        e.preventDefault();
-        rollVirtual();
-      }
       if (e.key === "d" || e.key === "D") {
         e.preventDefault();
         enterDoubles();
@@ -131,7 +112,7 @@ export function RollControls() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [rollVirtual, enterDoubles, phase, canRoll]);
+  }, [enterDoubles, phase, canRoll]);
 
   const disabledProps = { disabled: !canRoll || isBust || isGhostTurn };
   const neutralColor = "bg-white/10 text-white hover:bg-white/20 border border-white/10";
@@ -139,7 +120,10 @@ export function RollControls() {
   let sevenColor = "";
   let sevenLabel = "";
   if (isDanger) {
-    if (activeRoundEvent === "devils_mercy" && !devilsMercyUsed) {
+    if (activeRoundEvent === "time_bomb") {
+      sevenColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 border border-emerald-500/30";
+      sevenLabel = "+7";
+    } else if (activeRoundEvent === "devils_mercy" && !devilsMercyUsed) {
       sevenColor = "bg-emerald-600/80 text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-500 border border-emerald-500/30";
       sevenLabel = "+7";
     } else if (activeRoundEvent === "resilient_bank" && !resilientBankUsed) {
@@ -155,9 +139,9 @@ export function RollControls() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full max-w-md">
+    <div className="flex flex-col items-center gap-3 w-full max-w-md xl:max-w-2xl 2xl:max-w-4xl">
       <div className="w-full px-2">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-4 gap-2 md:gap-2.5 xl:gap-4">
           {[2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((sum) => {
             const isSeven = sum === 7;
             const isGoldenDouble = activeRoundEvent === "golden_totals" && isDanger && (sum === 10 || sum === 11);
@@ -173,7 +157,7 @@ export function RollControls() {
                 whileTap={{ scale: 0.9 }}
                 onClick={() => enterSum(sum)}
                 {...disabledProps}
-                className={`relative flex flex-col items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${color}`}
+                className={`relative flex flex-col items-center justify-center rounded-2xl aspect-square text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${color}`}
               >
                 <span>{isSeven ? sevenLabel : sum}</span>
                 {isGoldenDouble && (
@@ -188,7 +172,7 @@ export function RollControls() {
             whileTap={{ scale: 0.9 }}
             onClick={() => !isDanger && enterSum(12)}
             disabled={!canRoll || isBust || isGhostTurn || isDanger}
-            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${neutralColor}`}
+            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${neutralColor}`}
           >
             12
           </motion.button>
@@ -198,7 +182,7 @@ export function RollControls() {
             whileTap={{ scale: 0.9 }}
             onClick={() => isDanger && enterDoubles()}
             disabled={!canRoll || isBust || isGhostTurn || !isDanger}
-            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${
+            className={`flex items-center justify-center rounded-2xl aspect-square text-2xl md:text-3xl xl:text-4xl 2xl:text-5xl font-bold transition-all duration-150 cursor-pointer disabled:opacity-30 disabled:pointer-events-none ${
               isDanger
                 ? "bg-violet-600/80 text-white hover:bg-violet-500 border border-violet-500/30 shadow-lg shadow-violet-600/20"
                 : neutralColor

@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGameStore } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, ChevronDown, Sparkles } from "lucide-react";
+import { Dialog, DialogTitle } from "@/components/ui/dialog";
+import { Plus, Trash2, Play, ArrowUp, ArrowDown, Ghost, ChevronDown, Sparkles, Flame, Shield, Cloud, Star, Timer, Bomb, Zap } from "lucide-react";
 
 export function SetupScreen() {
   const players = useGameStore((s) => s.players);
@@ -16,9 +17,9 @@ export function SetupScreen() {
   const recolorPlayer = useGameStore((s) => s.recolorPlayer);
   const setTotalRounds = useGameStore((s) => s.setTotalRounds);
   const startGame = useGameStore((s) => s.startGame);
-  const ghostsActiveUntilRound = useGameStore((s) => s.ghostsActiveUntilRound);
+  const ghostRollsPerRound = useGameStore((s) => s.ghostRollsPerRound);
   const setGhostCount = useGameStore((s) => s.setGhostCount);
-  const setGhostsActiveUntilRound = useGameStore((s) => s.setGhostsActiveUntilRound);
+  const setGhostRollsPerRound = useGameStore((s) => s.setGhostRollsPerRound);
   const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
   const setRoundEventsEnabled = useGameStore((s) => s.setRoundEventsEnabled);
 
@@ -44,6 +45,8 @@ export function SetupScreen() {
     return () => document.removeEventListener("mousedown", handler);
   }, [colorPickerId]);
   const [isGameModesOpen, setIsGameModesOpen] = useState(false);
+  const [eventModalOpen, setEventModalOpen] = useState(false);
+  const [ghostModalOpen, setGhostModalOpen] = useState(false);
 
   const ghostCount = players.filter((p) => p.isGhost).length;
 
@@ -56,7 +59,19 @@ export function SetupScreen() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[85vh] py-10 px-6 gap-7 max-w-sm mx-auto w-full">
+    <div className="flex flex-col items-center justify-center min-h-screen py-10 px-6 gap-7 max-w-sm mx-auto w-full">
+      {/* BANK! Title */}
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05, type: "spring", stiffness: 200 }}
+        className="text-center select-none"
+      >
+        <h1 className="text-8xl font-black tracking-tight leading-none bg-gradient-to-br from-white via-indigo-200 to-violet-500 bg-clip-text text-transparent drop-shadow-[0_0_48px_rgba(139,92,246,0.45)]">
+          BANK!
+        </h1>
+      </motion.div>
+
       {/* Round count selector */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -111,10 +126,14 @@ export function SetupScreen() {
               <div className="pt-4 space-y-2">
                 {/* Round Events toggle */}
                 <div className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEventModalOpen(true)}
+                    className="flex items-center gap-2.5 hover:opacity-70 transition-opacity"
+                  >
                     <Sparkles className="w-4 h-4 text-white shrink-0" />
                     <p className="text-sm font-medium text-white leading-tight">Round Events</p>
-                  </div>
+                  </button>
                   <button
                     type="button"
                     role="switch"
@@ -130,10 +149,14 @@ export function SetupScreen() {
 
                 {/* Ghost Players toggle */}
                 <div className="flex items-center justify-between py-1">
-                  <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setGhostModalOpen(true)}
+                    className="flex items-center gap-2.5 hover:opacity-70 transition-opacity"
+                  >
                     <Ghost className="w-4 h-4 text-white shrink-0" />
                     <p className="text-sm font-medium text-white leading-tight">Ghost Players</p>
-                  </div>
+                  </button>
                   <button
                     type="button"
                     role="switch"
@@ -174,25 +197,25 @@ export function SetupScreen() {
                           </div>
                         </div>
 
-                        {/* Active until round — stepper */}
+                        {/* Rolls per round — stepper */}
                         <div className="px-1">
-                          <p className="text-xs font-medium text-gray-400 mb-2">Active until round</p>
+                          <p className="text-xs font-medium text-gray-400 mb-2">Rolls per round</p>
                           <div className="flex items-center gap-3">
                             <button
-                              onClick={() => setGhostsActiveUntilRound(Math.max(1, ghostsActiveUntilRound - 1))}
-                              disabled={ghostsActiveUntilRound <= 1}
+                              onClick={() => setGhostRollsPerRound(ghostRollsPerRound === null ? 10 : Math.max(1, ghostRollsPerRound - 1))}
+                              disabled={ghostRollsPerRound !== null && ghostRollsPerRound <= 1}
                               className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:bg-violet-100 hover:text-violet-600 transition-all disabled:opacity-30 disabled:pointer-events-none text-xl font-bold leading-none"
                             >
                               −
                             </button>
                             <div className="flex-1 text-center">
                               <span className="text-xl font-bold text-white tabular-nums">
-                                {ghostsActiveUntilRound === totalRounds ? "All" : ghostsActiveUntilRound}
+                                {ghostRollsPerRound === null ? "All" : ghostRollsPerRound}
                               </span>
                             </div>
                             <button
-                              onClick={() => setGhostsActiveUntilRound(Math.min(totalRounds, ghostsActiveUntilRound + 1))}
-                              disabled={ghostsActiveUntilRound >= totalRounds}
+                              onClick={() => setGhostRollsPerRound(ghostRollsPerRound === null ? null : ghostRollsPerRound >= 10 ? null : ghostRollsPerRound + 1)}
+                              disabled={ghostRollsPerRound === null}
                               className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:bg-violet-100 hover:text-violet-600 transition-all disabled:opacity-30 disabled:pointer-events-none text-xl font-bold leading-none"
                             >
                               +
@@ -231,100 +254,101 @@ export function SetupScreen() {
                 key={p.id}
                 layout
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                className={`flex items-center gap-3 border rounded-xl px-3 py-3 transition-all bg-gray-800/80 backdrop-blur-sm border-gray-700/80 shadow-sm hover:shadow-md shadow-black/20 ${colorPickerId === p.id ? "relative z-50" : ""}`}
+                className={`flex items-center gap-3 rounded-2xl px-3 py-4 border transition-all ${colorPickerId === p.id ? "relative z-50" : ""}`}
+                style={{ backgroundColor: p.color + "55", borderColor: p.color + "cc" }}
               >
-                {/* Reorder arrows */}
-                <div className="flex flex-col shrink-0">
-                  <button
-                    onClick={() => idx > 0 && reorderPlayers(idx, idx - 1)}
-                    disabled={idx === 0}
-                    className="text-gray-500 hover:text-white disabled:opacity-20 disabled:pointer-events-none cursor-pointer p-0.5"
-                  >
-                    <ArrowUp className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => idx < players.length - 1 && reorderPlayers(idx, idx + 1)}
-                    disabled={idx === players.length - 1}
-                    className="text-gray-500 hover:text-white disabled:opacity-20 disabled:pointer-events-none cursor-pointer p-0.5"
-                  >
-                    <ArrowDown className="w-3.5 h-3.5" />
-                  </button>
+                {/* Left: arrows + color swatch */}
+                <div className="flex items-center gap-2 shrink-0 w-14">
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => idx > 0 && reorderPlayers(idx, idx - 1)}
+                      disabled={idx === 0}
+                      className="text-white/40 hover:text-white disabled:opacity-20 disabled:pointer-events-none cursor-pointer p-0.5"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => idx < players.length - 1 && reorderPlayers(idx, idx + 1)}
+                      disabled={idx === players.length - 1}
+                      className="text-white/40 hover:text-white disabled:opacity-20 disabled:pointer-events-none cursor-pointer p-0.5"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Color swatch */}
+                  <div className="relative flex items-center">
+                    <button
+                      onClick={() => setColorPickerId(colorPickerId === p.id ? null : p.id)}
+                      className="w-5 h-5 rounded-full border-2 border-white/30 hover:border-white/70 transition-all"
+                      style={{ backgroundColor: p.color }}
+                      title="Change color"
+                    />
+                    {colorPickerId === p.id && (
+                      <div
+                        ref={colorPickerRef}
+                        className="absolute left-0 bottom-full mb-2 z-50 bg-gray-900 border border-white/10 rounded-2xl p-3 shadow-2xl"
+                        style={{ width: 160 }}
+                      >
+                        <div className="grid grid-cols-4 gap-2">
+                          {COLOR_PALETTE.map((c) => (
+                            <button
+                              key={c}
+                              onClick={() => { recolorPlayer(p.id, c); setColorPickerId(null); }}
+                              className={`w-8 h-8 rounded-full transition-transform hover:scale-110 active:scale-95 ${p.color === c ? "ring-2 ring-white ring-offset-2 ring-offset-gray-900" : ""}`}
+                              style={{ backgroundColor: c }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Player avatar — click to change color */}
-                <div className="relative shrink-0">
-                  <button
-                    onClick={() => setColorPickerId(colorPickerId === p.id ? null : p.id)}
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0 ring-2 ring-offset-2 ring-offset-gray-900 ring-transparent hover:ring-white/40 transition-all"
-                    style={{ backgroundColor: p.color }}
-                    title="Change color"
-                  >
-                    {p.isGhost
-                      ? <Ghost className="w-5 h-5 text-white" />
-                      : p.name.slice(0, 2).toUpperCase()
-                    }
-                  </button>
-                  {/* Color picker popover — opens upward to avoid being clipped by Start Game button */}
-                  {colorPickerId === p.id && (
-                    <div
-                      ref={colorPickerRef}
-                      className="absolute left-0 bottom-full mb-2 z-50 bg-gray-900 border border-white/10 rounded-2xl p-3 shadow-2xl"
-                      style={{ width: 160 }}
+                {/* Center: name / ghost icon — truly centered */}
+                <div className="flex-1 flex items-center justify-center">
+                  {p.isGhost ? (
+                    <Ghost className="w-9 h-9 text-white/90" />
+                  ) : editingId === p.id ? (
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onBlur={() => {
+                        if (editName.trim()) renamePlayer(p.id, editName.trim());
+                        setEditingId(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          if (editName.trim()) renamePlayer(p.id, editName.trim());
+                          setEditingId(null);
+                        }
+                        if (e.key === "Escape") setEditingId(null);
+                      }}
+                      className="w-full bg-black/30 border border-white/30 rounded-lg px-3 py-1 text-3xl font-bold text-white text-center focus:outline-none focus:border-white/60"
+                      maxLength={20}
+                    />
+                  ) : (
+                    <span
+                      className="text-3xl font-bold text-white tracking-tight cursor-default"
+                      onDoubleClick={() => { setEditingId(p.id); setEditName(p.name); }}
                     >
-                      <div className="grid grid-cols-4 gap-2">
-                        {COLOR_PALETTE.map((c) => (
-                          <button
-                            key={c}
-                            onClick={() => { recolorPlayer(p.id, c); setColorPickerId(null); }}
-                            className={`w-8 h-8 rounded-full transition-transform hover:scale-110 active:scale-95 ${p.color === c ? "ring-2 ring-white ring-offset-2 ring-offset-gray-900" : ""}`}
-                            style={{ backgroundColor: c }}
-                          />
-                        ))}
-                      </div>
-                    </div>
+                      {p.name}
+                    </span>
                   )}
                 </div>
 
-                {/* Inline rename on double-click */}
-                {editingId === p.id ? (
-                  <input
-                    autoFocus
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onBlur={() => {
-                      if (editName.trim()) renamePlayer(p.id, editName.trim());
-                      setEditingId(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        if (editName.trim()) renamePlayer(p.id, editName.trim());
-                        setEditingId(null);
-                      }
-                      if (e.key === "Escape") setEditingId(null);
-                    }}
-                    className="flex-1 bg-white/10 border border-indigo-500 rounded px-2 py-0.5 text-sm text-white focus:outline-none"
-                    maxLength={20}
-                  />
-                ) : (
-                  <span
-                    className="flex-1 font-medium text-sm text-white"
-                    onDoubleClick={() => {
-                      setEditingId(p.id);
-                      setEditName(p.name);
-                    }}
-                  >
-                    {p.isGhost ? "Ghost" : p.name}
-                  </span>
-                )}
-
-                {!p.isGhost && (
-                  <button
-                    onClick={() => removePlayer(p.id)}
-                    className="text-gray-500 hover:text-red-400 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
+                {/* Right: delete (or spacer to keep name centered) */}
+                <div className="shrink-0 w-14 flex items-center justify-end">
+                  {!p.isGhost && (
+                    <button
+                      onClick={() => removePlayer(p.id)}
+                      className="text-white/30 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
@@ -378,6 +402,68 @@ export function SetupScreen() {
           <p className="text-gray-500 text-sm font-medium text-center mt-3">Add at least 2 players</p>
         )}
       </motion.div>
+
+      {/* Round Events info dialog */}
+      <Dialog open={eventModalOpen} onOpenChange={setEventModalOpen}>
+        <DialogTitle className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-5 h-5 text-white" />
+          Round Events
+        </DialogTitle>
+        <div className="max-h-[65vh] overflow-y-auto space-y-4 -mx-1 px-1">
+          <p className="text-sm text-gray-400 mb-6">
+            If enabled, one random event will trigger at the start of each round, modifying the rules for everyone.
+          </p>
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-red-400 mb-1 flex items-center gap-2"><Flame className="w-4 h-4 text-red-500" /> Devil&apos;s Mercy</h3>
+            <p className="text-sm text-gray-300">The first 7 in the danger zone won&apos;t bust — it just adds 7 and play continues.</p>
+          </div>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-emerald-400 mb-1 flex items-center gap-2"><Shield className="w-4 h-4 text-emerald-500" /> Extended Safety</h3>
+            <p className="text-sm text-gray-300">Safe zone runs for 5 rolls this round instead of 3.</p>
+          </div>
+          <div className="bg-violet-500/10 border border-violet-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-violet-400 mb-1 flex items-center gap-2"><Ghost className="w-4 h-4 text-violet-500" /> Ghost Overdrive</h3>
+            <p className="text-sm text-gray-300">Every ghost rolls twice per turn this round.</p>
+          </div>
+          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-yellow-500 mb-1 flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500" /> Golden Totals</h3>
+            <p className="text-sm text-gray-300">Any roll totaling 10, 11, or 12 counts as doubles.</p>
+          </div>
+          <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-sky-400 mb-1 flex items-center gap-2"><Cloud className="w-4 h-4 text-sky-500" /> Heavenly Sevens</h3>
+            <p className="text-sm text-gray-300">7s in the safe zone are worth +140 instead of +70.</p>
+          </div>
+          <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-teal-400 mb-1 flex items-center gap-2"><Shield className="w-4 h-4 text-teal-500" /> Brazilian Bank</h3>
+            <p className="text-sm text-gray-300">The first danger-zone 7 halves the bank instead of busting it.</p>
+          </div>
+          <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-orange-400 mb-1 flex items-center gap-2"><Timer className="w-4 h-4 text-orange-500" /> Short Fuse</h3>
+            <p className="text-sm text-gray-300">Safe zone is only 1 roll this round. Danger comes fast.</p>
+          </div>
+          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-rose-400 mb-1 flex items-center gap-2"><Bomb className="w-4 h-4 text-rose-500" /> Time Bomb</h3>
+            <p className="text-sm text-gray-300">7 won&apos;t bust this round — but one number between 2 and 12 is secretly rigged to. Roll it in the danger zone and it&apos;s over.</p>
+          </div>
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+            <h3 className="font-bold text-amber-400 mb-1 flex items-center gap-2"><Zap className="w-4 h-4 text-amber-500" /> Triple Threat</h3>
+            <p className="text-sm text-gray-300">Hit doubles and the bank triples instead of doubling.</p>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Ghost Players info dialog */}
+      <Dialog open={ghostModalOpen} onOpenChange={setGhostModalOpen}>
+        <DialogTitle className="flex items-center gap-2 mb-4">
+          <Ghost className="w-5 h-5 text-white" />
+          Ghost Players
+        </DialogTitle>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-400">
+            Players that roll automatically — always 7s in the safe zone and doubles in the danger zone. Good for filling out a group or keeping the bank from sitting still.
+          </p>
+        </div>
+      </Dialog>
     </div>
   );
 }

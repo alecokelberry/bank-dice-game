@@ -103,20 +103,15 @@ export function WinnerScreen() {
             return (
               <div
                 key={player.id}
-                className={`flex items-center justify-between rounded-xl px-4 py-2.5 ${
-                  isWinner
-                    ? "bg-amber-400/10 border border-amber-400/20"
-                    : "bg-white/5 border border-white/10"
-                }`}
+                className="flex items-center justify-between rounded-xl px-4 py-2.5 border"
+                style={{
+                  backgroundColor: player.color + "55",
+                  borderColor: player.color + "cc",
+                }}
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-black text-white shrink-0"
-                    style={{ backgroundColor: player.color }}
-                  >
-                    {ordinal(rank)}
-                  </div>
-                  <span className="text-white font-semibold">{player.name}</span>
+                  <span className="text-[11px] font-black text-white/60 w-6 shrink-0">{ordinal(rank)}</span>
+                  <span className="text-3xl font-bold text-white">{player.name}</span>
                 </div>
                 <span className="text-white tabular-nums font-bold">
                   {player.score.toLocaleString()}

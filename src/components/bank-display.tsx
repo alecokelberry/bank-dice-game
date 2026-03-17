@@ -98,7 +98,7 @@ export function BankDisplay() {
               ? { scale: { repeat: Infinity, duration: 1.5, ease: "easeInOut" }, opacity: { duration: 0.2 } }
               : { type: "spring", stiffness: 300, damping: 20 }
           }
-          className={`text-8xl md:text-9xl font-black tabular-nums leading-none relative z-10 ${colorClass}`}
+          className={`text-8xl md:text-9xl xl:text-[11rem] 2xl:text-[15rem] font-black tabular-nums leading-none relative z-10 ${colorClass}`}
           style={{ textShadow: `0 0 50px ${glowColor}` }}
         >
           {isBust ? "BUST!" : <AnimatedNumber value={bank} />}

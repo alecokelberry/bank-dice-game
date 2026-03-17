@@ -23,9 +23,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const setTotalRounds = useGameStore((s) => s.setTotalRounds);
   const startGame = useGameStore((s) => s.startGame);
   const phase = useGameStore((s) => s.phase);
-  const ghostsActiveUntilRound = useGameStore((s) => s.ghostsActiveUntilRound);
+  const ghostRollsPerRound = useGameStore((s) => s.ghostRollsPerRound);
   const setGhostCount = useGameStore((s) => s.setGhostCount);
-  const setGhostsActiveUntilRound = useGameStore((s) => s.setGhostsActiveUntilRound);
+  const setGhostRollsPerRound = useGameStore((s) => s.setGhostRollsPerRound);
   const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
   const setRoundEventsEnabled = useGameStore((s) => s.setRoundEventsEnabled);
 
@@ -171,25 +171,25 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           </div>
                         </div>
 
-                        {/* Active until round — stepper */}
+                        {/* Rolls per round — stepper */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-1.5">Active until round</p>
+                          <p className="text-xs text-gray-400 mb-1.5">Rolls per round</p>
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => setGhostsActiveUntilRound(Math.max(1, ghostsActiveUntilRound - 1))}
-                              disabled={phase !== "setup" || ghostsActiveUntilRound <= 1}
+                              onClick={() => setGhostRollsPerRound(ghostRollsPerRound === null ? 10 : Math.max(1, ghostRollsPerRound - 1))}
+                              disabled={ghostRollsPerRound !== null && ghostRollsPerRound <= 1}
                               className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:bg-violet-900/30 hover:text-violet-400 transition-all disabled:opacity-30 disabled:pointer-events-none text-lg font-bold leading-none"
                             >
                               −
                             </button>
                             <div className="flex-1 text-center">
                               <span className="text-base font-bold text-white tabular-nums">
-                                {ghostsActiveUntilRound === totalRounds ? "All" : ghostsActiveUntilRound}
+                                {ghostRollsPerRound === null ? "All" : ghostRollsPerRound}
                               </span>
                             </div>
                             <button
-                              onClick={() => setGhostsActiveUntilRound(Math.min(totalRounds, ghostsActiveUntilRound + 1))}
-                              disabled={phase !== "setup" || ghostsActiveUntilRound >= totalRounds}
+                              onClick={() => setGhostRollsPerRound(ghostRollsPerRound === null ? null : ghostRollsPerRound >= 10 ? null : ghostRollsPerRound + 1)}
+                              disabled={ghostRollsPerRound === null}
                               className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-300 hover:bg-violet-900/30 hover:text-violet-400 transition-all disabled:opacity-30 disabled:pointer-events-none text-lg font-bold leading-none"
                             >
                               +

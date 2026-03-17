@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
-import { useGameStore, selectIsInDangerZone, selectCanRoll, ROUND_EVENTS } from "@/store/game-store";
+import React, { useState } from "react";
+import { useGameStore, ROUND_EVENTS } from "@/store/game-store";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
-import { DicePair } from "@/components/dice";
-import { Undo2, RotateCcw, AlertTriangle, Dices, Zap, Ghost, Shield, Cloud, Flame, Timer, Star, Bomb, Sparkles } from "lucide-react";
-import { playRollSound, triggerHaptic } from "@/lib/sounds";
+import { Undo2, RotateCcw, AlertTriangle, Zap, Ghost, Shield, Cloud, Flame, Timer, Star, Bomb, Sparkles } from "lucide-react";
 
 interface TopBarProps {
   onOpenSettings: () => void;
@@ -18,53 +16,28 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
   const undoSnapshot = useGameStore((s) => s.undoSnapshot);
   const undoLabel = useGameStore((s) => s.undoLabel);
   const resetGame = useGameStore((s) => s.resetGame);
-  const isDanger = useGameStore(selectIsInDangerZone);
-  const handleRoll = useGameStore((s) => s.handleRoll);
-  const canRoll = useGameStore(selectCanRoll);
-  const lastDie1 = useGameStore((s) => s.lastDie1);
-  const lastDie2 = useGameStore((s) => s.lastDie2);
-  const isBust = useGameStore((s) => s.isBust);
   const currentRound = useGameStore((s) => s.currentRound);
   const totalRounds = useGameStore((s) => s.totalRounds);
   const rollCount = useGameStore((s) => s.rollCount);
 
   const [confirmReset, setConfirmReset] = useState(false);
-  const [virtualDiceOpen, setVirtualDiceOpen] = useState(false);
-  const [isRolling, setIsRolling] = useState(false);
-
   const [eventModalOpen, setEventModalOpen] = useState(false);
-  const [ghostModalOpen, setGhostModalOpen] = useState(false);
   const roundEventsEnabled = useGameStore((s) => s.roundEventsEnabled);
   const activeRoundEventId = useGameStore((s) => s.activeRoundEvent);
   const activeEvent = ROUND_EVENTS.find((e) => e.id === activeRoundEventId);
   const players = useGameStore((s) => s.players);
   const hasGhosts = players.some(p => p.isGhost);
 
-  // Generates two random dice and submits the roll after a short animation delay
-  const rollVirtual = useCallback(() => {
-    if (!canRoll || isRolling) return;
-    setIsRolling(true);
-    playRollSound();
-    triggerHaptic("medium");
-    setTimeout(() => {
-      const d1 = Math.floor(Math.random() * 6) + 1;
-      const d2 = Math.floor(Math.random() * 6) + 1;
-      handleRoll(d1, d2);
-      setIsRolling(false);
-    }, 500);
-  }, [canRoll, isRolling, handleRoll]);
+  if (phase === "setup") return null;
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-y-2 px-2 sm:px-4 py-2 bg-gray-950/90 border-b border-white/10 backdrop-blur-xl shadow-sm relative">
+      <header className="md:hidden sticky top-0 z-30 flex flex-wrap items-center justify-between gap-y-2 px-2 sm:px-4 py-2 bg-gray-950/90 border-b border-white/10 backdrop-blur-xl shadow-sm relative">
 
         {/* Left Section */}
         <div className="flex items-center gap-2">
-          {phase === "setup" && (
-            <span className="text-lg font-black tracking-tight text-white">BANK!</span>
-          )}
           {phase === "playing" && (
-            <div className="flex items-center gap-3">
+            <div className="md:hidden flex items-center gap-3">
               <div className="flex flex-col leading-none">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-0.5">Round</span>
                 <div className="flex items-baseline gap-0.5">
@@ -81,8 +54,8 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           )}
         </div>
 
-        {/* Center Section: Round event badge */}
-        <div className="absolute left-1/2 -translate-x-1/2">
+        {/* Center Section: Round event badge (hidden on desktop — shown in score panel instead) */}
+        <div className="absolute left-1/2 -translate-x-1/2 md:hidden">
           {phase === "playing" && roundEventsEnabled && activeEvent && (() => {
             const EVENT_BADGE: Record<string, { icon: React.FC<{className?: string}>; bg: string; text: string; iconColor: string }> = {
               triple_threat:   { icon: Zap,    bg: "bg-amber-500/20 border-amber-500/30",   text: "text-amber-400",  iconColor: "text-amber-400" },
@@ -112,27 +85,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
 
         {/* Right Section */}
         <div className="flex items-center justify-end gap-0.5 sm:gap-1 ml-auto">
-          {phase === "setup" && (
-            <Button variant="ghost" size="icon" onClick={() => setEventModalOpen(true)} title="Round Events" className="h-8 w-8 sm:h-9 sm:w-9">
-              <Sparkles className="w-4 h-4 text-white" />
-            </Button>
-          )}
-          {phase === "setup" && (
-            <Button variant="ghost" size="icon" onClick={() => setGhostModalOpen(true)} title="Ghost Players" className="h-8 w-8 sm:h-9 sm:w-9">
-              <Ghost className="w-4 h-4 text-white" />
-            </Button>
-          )}
-          {phase === "playing" && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setVirtualDiceOpen(true)}
-              title="Virtual dice"
-              className="h-8 w-8 sm:h-9 sm:w-9"
-            >
-              <Dices className="w-4 h-4" />
-            </Button>
-          )}
           {phase === "playing" && (
             <Button
               variant="ghost"
@@ -181,34 +133,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           >
             Reset Game
           </Button>
-        </div>
-      </Dialog>
-
-      {/* Virtual dice dialog — for playing without physical dice */}
-      <Dialog open={virtualDiceOpen} onOpenChange={setVirtualDiceOpen}>
-        <DialogTitle>Virtual Dice</DialogTitle>
-        <div className="flex flex-col items-center gap-4 py-2">
-          <DicePair
-            die1={lastDie1}
-            die2={lastDie2}
-            isRolling={isRolling}
-            onRoll={canRoll ? rollVirtual : undefined}
-          />
-          <Button
-            variant="default"
-            size="lg"
-            onClick={rollVirtual}
-            disabled={!canRoll || isRolling || isBust}
-            className={`text-lg px-10 transition-all duration-200 ${
-              isDanger
-                ? "bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-lg shadow-amber-500/20"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20"
-            }`}
-          >
-            <Dices className="w-5 h-5 mr-2" />
-            {isRolling ? "Rolling..." : isDanger ? "Risk It!" : "Roll Dice"}
-          </Button>
-          <span className="text-xs text-gray-600">Space / R</span>
         </div>
       </Dialog>
 
@@ -270,7 +194,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
 
           <div className="bg-teal-500/10 border border-teal-500/20 rounded-xl p-4">
             <h3 className="font-bold text-teal-400 mb-1 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-teal-500" /> Resilient Bank
+              <Shield className="w-4 h-4 text-teal-500" /> Brazilian Bank
             </h3>
             <p className="text-sm text-gray-300">
               The first danger-zone 7 halves the bank instead of busting it.
@@ -307,18 +231,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
       </Dialog>
 
 
-
-      <Dialog open={ghostModalOpen} onOpenChange={setGhostModalOpen}>
-        <DialogTitle className="flex items-center gap-2 mb-4">
-          <Ghost className="w-5 h-5 text-white" />
-          Ghost Players
-        </DialogTitle>
-        <div className="space-y-4">
-          <p className="text-sm text-gray-400">
-            Players that roll automatically — always 7s in the safe zone and doubles in the danger zone. Good for filling out a group or keeping the bank from sitting still.
-          </p>
-        </div>
-      </Dialog>
 
     </>
   );
